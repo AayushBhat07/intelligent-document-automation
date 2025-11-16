@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+        font-size: 14px;
+        color: #202124;
+        background: #fff;
+        padding: 16px;
+      }
+      
+      .header {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e8eaed;
+      }
+      
+      .header h2 {
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .header p {
+        font-size: 12px;
+        color: #5f6368;
+      }
+      
+      .section {
+        margin-bottom: 24px;
+      }
+      
+      .section-title {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 12px;
+        color: #3c4043;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      
+      .action-card {
+        background: #f8f9fa;
+        border: 1px solid #e8eaed;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      .action-card:hover {
+        background: #e8f0fe;
+        border-color: #1a73e8;
+      }
+      
+      .action-card-title {
+        font-weight: 500;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      
+      .action-card-desc {
+        font-size: 12px;
+        color: #5f6368;
+      }
+      
+      .issue-badge {
+        display: inline-block;
+        background: #fce8e6;
+        color: #c5221f;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        margin-left: auto;
+      }
+      
+      .issue-badge.warning {
+        background: #fef7e0;
+        color: #f9ab00;
+      }
+      
+      .issue-badge.info {
+        background: #e8f0fe;
+        color: #1a73e8;
+      }
+      
+      .btn {
+        width: 100%;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 8px;
+      }
+      
+      .btn-primary {
+        background: #1a73e8;
+        color: #fff;
+      }
+      
+      .btn-primary:hover {
+        background: #1765cc;
+      }
+      
+      .btn-secondary {
+        background: #fff;
+        color: #1a73e8;
+        border: 1px solid #dadce0;
+      }
+      
+      .btn-secondary:hover {
+        background: #f8f9fa;
+      }
+      
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: #5f6368;
+      }
+      
+      .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #1a73e8;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 12px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .results {
+        background: #e8f5e9;
+        border: 1px solid #81c784;
+        border-radius: 4px;
+        padding: 12px;
+        margin-top: 12px;
+      }
+      
+      .results-title {
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #2e7d32;
+      }
+      
+      .tab-container {
+        display: flex;
+        border-bottom: 1px solid #e8eaed;
+        margin-bottom: 16px;
+      }
+      
+      .tab {
+        flex: 1;
+        padding: 12px 8px;
+        text-align: center;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+        font-size: 13px;
+      }
+      
+      .tab.active {
+        border-bottom-color: #1a73e8;
+        color: #1a73e8;
+        font-weight: 500;
+      }
+      
+      .tab-content {
+        display: none;
+      }
+      
+      .tab-content.active {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h2>🤖 Smart Automation</h2>
+      <p>Automate your workflow with intelligent suggestions</p>
+    </div>
+    
+    <div class="tab-container">
+      <div class="tab active" onclick="switchTab('analyze')">📊 Analyze</div>
+      <div class="tab" onclick="switchTab('redact')">🔒 Redact</div>
+      <div class="tab" onclick="switchTab('clean')">✨ Clean</div>
+      <div class="tab" onclick="switchTab('templates')">📋 Templates</div>
+    </div>
+    
+    <!-- Analyze Tab -->
+    <div id="tab-analyze" class="tab-content active">
+      <div class="section">
+        <div class="section-title">📈 Quick Actions</div>
+        
+        <div class="action-card" onclick="runAnalysis()">
+          <div class="action-card-title">
+            🔍 Analyze Document
+            <span id="issues-badge" class="issue-badge info" style="display: none;">0 issues</span>
+          </div>
+          <div class="action-card-desc">Detect formatting issues and anomalies</div>
+        </div>
+        
+        <div class="action-card" onclick="summarizeContent()">
+          <div class="action-card-title">📝 Summarize</div>
+          <div class="action-card-desc">Generate a smart summary of selected text or entire document</div>
+        </div>
+        
+        <div id="analysis-results"></div>
+      </div>
+    </div>
+    
+    <!-- Redact Tab -->
+    <div id="tab-redact" class="tab-content">
+      <div class="section">
+        <div class="section-title">🔒 Privacy Protection</div>
+        
+        <div class="action-card" onclick="detectPII()">
+          <div class="action-card-title">🔍 Detect PII</div>
+          <div class="action-card-desc">Find emails, phone numbers, SSN, and sensitive data</div>
+        </div>
+        
+        <div class="action-card" onclick="redactSensitiveData()">
+          <div class="action-card-title">🚫 Redact Sensitive Data</div>
+          <div class="action-card-desc">Automatically mask detected PII</div>
+        </div>
+        
+        <div id="redaction-results"></div>
+      </div>
+    </div>
+    
+    <!-- Clean Tab -->
+    <div id="tab-clean" class="tab-content">
+      <div class="section">
+        <div class="section-title">✨ Cleanup & Format</div>
+        
+        <div class="action-card" onclick="removeDuplicates()">
+          <div class="action-card-title">🗑️ Remove Duplicates</div>
+          <div class="action-card-desc">Find and remove duplicate rows or entries</div>
+        </div>
+        
+        <div class="action-card" onclick="standardizeDates()">
+          <div class="action-card-title">📅 Standardize Dates</div>
+          <div class="action-card-desc">Convert all dates to consistent format</div>
+        </div>
+        
+        <div class="action-card" onclick="fillEmptyCells()">
+          <div class="action-card-title">📊 Fill Empty Cells</div>
+          <div class="action-card-desc">Intelligently fill blank cells with appropriate values</div>
+        </div>
+        
+        <div id="cleanup-results"></div>
+      </div>
+    </div>
+    
+    <!-- Templates Tab -->
+    <div id="tab-templates" class="tab-content">
+      <div class="section">
+        <div class="section-title">📋 Template Library</div>
+        
+        <button class="btn btn-primary" onclick="openTemplatePicker()">
+          📁 Browse Templates
+        </button>
+        
+        <div class="action-card" onclick="applyGradingRubric()">
+          <div class="action-card-title">🎓 Grading Rubric</div>
+          <div class="action-card-desc">Apply standard grading template</div>
+        </div>
+        
+        <div class="action-card" onclick="applyDocumentStyle()">
+          <div class="action-card-title">🎨 Document Style</div>
+          <div class="action-card-desc">Apply professional formatting template</div>
+        </div>
+        
+        <div id="template-results"></div>
+      </div>
+    </div>
+    
+    <div id="loading" class="loading" style="display: none;">
+      <div class="spinner"></div>
+      <div>Processing...</div>
+    </div>
+    
+    <script>
+      // Tab switching
+      function switchTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+          tab.classList.remove('active');
+        });
+        document.querySelectorAll('.tab').forEach(tab => {
+          tab.classList.remove('active');
+        });
+        
+        // Show selected tab
+        document.getElementById('tab-' + tabName).classList.add('active');
+        event.target.classList.add('active');
+      }
+      
+      // Show/hide loading
+      function showLoading(show) {
+        document.getElementById('loading').style.display = show ? 'block' : 'none';
+      }
+      
+      // Analysis functions
+      function runAnalysis() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(displayAnalysisResults)
+          .withFailureHandler(handleError)
+          .analyzeDocument();
+      }
+      
+      function displayAnalysisResults(results) {
+        showLoading(false);
+        const container = document.getElementById('analysis-results');
+        const badge = document.getElementById('issues-badge');
+        
+        if (results.issues && results.issues.length > 0) {
+          badge.style.display = 'inline-block';
+          badge.textContent = results.issues.length + ' issues';
+          badge.className = 'issue-badge warning';
+          
+          let html = '<div class="results"><div class="results-title">Found ' + results.issues.length + ' issues:</div>';
+          results.issues.forEach(issue => {
+            html += '<div style="margin: 4px 0; font-size: 12px;">• ' + issue + '</div>';
+          });
+          html += '</div>';
+          container.innerHTML = html;
+        } else {
+          badge.style.display = 'inline-block';
+          badge.textContent = '✓ No issues';
+          badge.className = 'issue-badge info';
+          container.innerHTML = '<div class="results"><div class="results-title">✅ Document looks great!</div></div>';
+        }
+      }
+      
+      function summarizeContent() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(displaySummary)
+          .withFailureHandler(handleError)
+          .summarizeDocument();
+      }
+      
+      function displaySummary(summary) {
+        showLoading(false);
+        const container = document.getElementById('analysis-results');
+        container.innerHTML = '<div class="results"><div class="results-title">📝 Summary:</div><div style="margin-top: 8px; font-size: 13px;">' + summary + '</div></div>';
+      }
+      
+      // Redaction functions
+      function detectPII() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(displayPIIResults)
+          .withFailureHandler(handleError)
+          .detectPIIInDocument();
+      }
+      
+      function displayPIIResults(results) {
+        showLoading(false);
+        const container = document.getElementById('redaction-results');
+        
+        if (results.found && results.found.length > 0) {
+          let html = '<div class="results" style="background: #fef7e0; border-color: #f9ab00;"><div class="results-title" style="color: #f9ab00;">⚠️ Found ' + results.found.length + ' sensitive items:</div>';
+          results.found.forEach(item => {
+            html += '<div style="margin: 4px 0; font-size: 12px;">• ' + item.type + ': ' + item.preview + '</div>';
+          });
+          html += '</div>';
+          container.innerHTML = html;
+        } else {
+          container.innerHTML = '<div class="results"><div class="results-title">✅ No PII detected</div></div>';
+        }
+      }
+      
+      function redactSensitiveData() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(displayRedactionResults)
+          .withFailureHandler(handleError)
+          .redactPIIInDocument();
+      }
+      
+      function displayRedactionResults(results) {
+        showLoading(false);
+        const container = document.getElementById('redaction-results');
+        container.innerHTML = '<div class="results"><div class="results-title">✅ Redacted ' + results.count + ' items</div></div>';
+      }
+      
+      // Cleanup functions
+      function removeDuplicates() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(displayCleanupResults)
+          .withFailureHandler(handleError)
+          .removeDuplicateRows();
+      }
+      
+      function standardizeDates() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(displayCleanupResults)
+          .withFailureHandler(handleError)
+          .standardizeDateFormats();
+      }
+      
+      function fillEmptyCells() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(displayCleanupResults)
+          .withFailureHandler(handleError)
+          .fillEmptyCellsIntelligently();
+      }
+      
+      function displayCleanupResults(results) {
+        showLoading(false);
+        const container = document.getElementById('cleanup-results');
+        container.innerHTML = '<div class="results"><div class="results-title">✅ ' + results.message + '</div></div>';
+      }
+      
+      // Template functions
+      function openTemplatePicker() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(handleTemplateSelection)
+          .withFailureHandler(handleError)
+          .showTemplatePicker();
+      }
+      
+      function applyGradingRubric() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(displayTemplateResults)
+          .withFailureHandler(handleError)
+          .applyTemplate('grading_rubric');
+      }
+      
+      function applyDocumentStyle() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(displayTemplateResults)
+          .withFailureHandler(handleError)
+          .applyTemplate('document_style');
+      }
+      
+      function handleTemplateSelection(result) {
+        showLoading(false);
+        displayTemplateResults(result);
+      }
+      
+      function displayTemplateResults(results) {
+        showLoading(false);
+        const container = document.getElementById('template-results');
+        container.innerHTML = '<div class="results"><div class="results-title">✅ ' + results.message + '</div></div>';
+      }
+      
+      // Error handler
+      function handleError(error) {
+        showLoading(false);
+        alert('Error: ' + error.message);
+      }
+      
+      // Initialize on load
+      window.onload = function() {
+        runAnalysis();
+      };
+    </script>
+  </body>
+</html>

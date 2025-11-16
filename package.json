@@ -1,0 +1,24 @@
+{
+  "name": "intelligent-document-automation",
+  "version": "1.0.0",
+  "description": "🚀 Smart automation for Google Workspace - because repetitive tasks are so 2020! ✨",
+  "main": "src/Main.js",
+  "scripts": {
+    "push": "clasp push",
+    "deploy": "clasp deploy",
+    "open": "clasp open",
+    "login": "clasp login"
+  },
+  "keywords": [
+    "google-workspace",
+    "automation",
+    "add-on",
+    "document-processing"
+  ],
+  "author": "AayushBhat07",
+  "license": "MIT",
+  "devDependencies": {
+    "@google/clasp": "^2.4.2",
+    "@types/google-apps-script": "^1.0.83"
+  }
+}
