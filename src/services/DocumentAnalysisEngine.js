@@ -107,9 +107,38 @@ const DocumentAnalysisEngine = (function() {
     }
     
     // Check for multiple consecutive spaces
-    if (/\s{2,}/.test(text)) {
-      issues.push('Found multiple consecutive spaces');
+    const multipleSpaces = checkMultipleSpaces(text);
+    if (multipleSpaces.count > 0) {
+      issues.push(`Found ${multipleSpaces.count} instance(s) of multiple consecutive spaces`);
       suggestions.push('Remove extra spaces for cleaner formatting');
+    }
+    
+    // Check for spacing issues around punctuation
+    const spacingIssues = checkPunctuationSpacing(text);
+    if (spacingIssues.length > 0) {
+      issues.push(`Found ${spacingIssues.length} spacing issue(s) around punctuation`);
+      suggestions.push('Fix spacing before/after punctuation marks');
+    }
+    
+    // Check for capitalization errors
+    const capIssues = checkCapitalization(text);
+    if (capIssues.length > 0) {
+      issues.push(`Found ${capIssues.length} capitalization error(s)`);
+      suggestions.push('Fix random or inconsistent capitalization');
+    }
+    
+    // Check for spelling mistakes
+    const spellingErrors = checkSpelling(text);
+    if (spellingErrors.length > 0) {
+      issues.push(`Found ${spellingErrors.length} potential spelling mistake(s)`);
+      suggestions.push('Review and correct spelling errors');
+    }
+    
+    // Check for sentence structure problems
+    const sentenceIssues = checkSentenceStructure(text);
+    if (sentenceIssues.length > 0) {
+      issues.push(`Found ${sentenceIssues.length} sentence structure issue(s)`);
+      suggestions.push('Review sentences for proper punctuation and structure');
     }
     
     // Check for inconsistent bullet/numbering
@@ -338,6 +367,280 @@ const DocumentAnalysisEngine = (function() {
     return longParagraphs;
   }
   
+  /**
+   * Checks for multiple consecutive spaces
+   * @param {string} text - Document text
+   * @returns {Object} Count and examples
+   */
+  function checkMultipleSpaces(text) {
+    const matches = text.match(/\s{2,}/g);
+    return {
+      count: matches ? matches.length : 0,
+      examples: matches ? matches.slice(0, 3) : []
+    };
+  }
+  
+  /**
+   * Checks for spacing issues around punctuation
+   * @param {string} text - Document text
+   * @returns {Array} Array of spacing issues
+   */
+  function checkPunctuationSpacing(text) {
+    const issues = [];
+    
+    // Space before comma, period, question mark, exclamation
+    const spaceBefore = text.match(/\s+[,.!?;:]/g);
+    if (spaceBefore && spaceBefore.length > 0) {
+      issues.push({ type: 'space_before_punctuation', count: spaceBefore.length });
+    }
+    
+    // Missing space after comma, period (but not in numbers or ellipsis)
+    const missingAfterComma = text.match(/,[^\s\d]/g);
+    if (missingAfterComma && missingAfterComma.length > 0) {
+      issues.push({ type: 'missing_space_after_comma', count: missingAfterComma.length });
+    }
+    
+    // Missing space after period (but not in abbreviations, ellipsis, or decimals)
+    const missingAfterPeriod = text.match(/\.(?![\s\d\.\)])[A-Z]/g);
+    if (missingAfterPeriod && missingAfterPeriod.length > 0) {
+      issues.push({ type: 'missing_space_after_period', count: missingAfterPeriod.length });
+    }
+    
+    return issues;
+  }
+  
+  /**
+   * Checks for capitalization errors
+   * @param {string} text - Document text
+   * @returns {Array} Array of capitalization issues
+   */
+  function checkCapitalization(text) {
+    const issues = [];
+    
+    // Split into sentences
+    const sentences = text.split(/[.!?]+\s+/);
+    
+    sentences.forEach((sentence, index) => {
+      if (sentence.trim().length === 0) return;
+      
+      // Check if sentence starts with lowercase (excluding quotes, parentheses, etc.)
+      const firstWord = sentence.trim().match(/^["'(\[]*([a-z])/i);
+      if (firstWord && firstWord[1] && firstWord[1] === firstWord[1].toLowerCase()) {
+        issues.push({ type: 'lowercase_sentence_start', sentence: index });
+      }
+      
+      // Check for random mid-sentence capitals (words starting with capital not after period)
+      // Exclude: proper nouns indicators, acronyms, and common abbreviations
+      const randomCaps = sentence.match(/(?<!\. )(?<!^)\b[A-Z][a-z]+(?:[A-Z][a-z]+)+/g);
+      if (randomCaps && randomCaps.length > 0) {
+        // Filter out likely proper nouns (for now, just count them)
+        const suspiciousCaps = randomCaps.filter(word => {
+          // Keep as issue if it looks like a common word incorrectly capitalized
+          return word.length > 2 && /^[A-Z][a-z]+[A-Z]/.test(word);
+        });
+        if (suspiciousCaps.length > 0) {
+          issues.push({ type: 'mid_sentence_capitals', count: suspiciousCaps.length });
+        }
+      }
+      
+      // Check for inconsistent capitalization of the same word
+      const words = sentence.toLowerCase().match(/\b[a-z]{3,}\b/gi);
+      if (words) {
+        const wordMap = {};
+        sentence.match(/\b[A-Za-z]{3,}\b/g)?.forEach(word => {
+          const lower = word.toLowerCase();
+          if (!wordMap[lower]) {
+            wordMap[lower] = [];
+          }
+          wordMap[lower].push(word);
+        });
+        
+        // Check for same word with different capitalizations
+        Object.keys(wordMap).forEach(lower => {
+          const variations = [...new Set(wordMap[lower])];
+          if (variations.length > 1 && !isLikelyProperNoun(lower)) {
+            issues.push({ type: 'inconsistent_capitalization', word: lower });
+          }
+        });
+      }
+    });
+    
+    return issues;
+  }
+  
+  /**
+   * Checks if a word is likely a proper noun
+   * @param {string} word - Word to check
+   * @returns {boolean}
+   */
+  function isLikelyProperNoun(word) {
+    // Simple heuristic: very short words, or common abbreviations
+    const properNouns = ['i', 'january', 'february', 'march', 'april', 'may', 'june', 
+                        'july', 'august', 'september', 'october', 'november', 'december',
+                        'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    return word.length < 3 || properNouns.includes(word.toLowerCase());
+  }
+  
+  /**
+   * Checks for spelling mistakes using common patterns
+   * @param {string} text - Document text
+   * @returns {Array} Array of potential spelling errors
+   */
+  function checkSpelling(text) {
+    const issues = [];
+    
+    // Common misspellings dictionary
+    const commonMisspellings = {
+      'teh': 'the',
+      'recieve': 'receive',
+      'occured': 'occurred',
+      'seperate': 'separate',
+      'definately': 'definitely',
+      'begining': 'beginning',
+      'untill': 'until',
+      'writting': 'writing',
+      'occassion': 'occasion',
+      'tommorrow': 'tomorrow',
+      'acheive': 'achieve',
+      'beleive': 'believe',
+      'calender': 'calendar',
+      'enviroment': 'environment',
+      'goverment': 'government',
+      'greatful': 'grateful',
+      'harrass': 'harass',
+      'maintenence': 'maintenance',
+      'neccessary': 'necessary',
+      'occassionally': 'occasionally',
+      'posession': 'possession',
+      'recomend': 'recommend',
+      'refered': 'referred',
+      'relevent': 'relevant',
+      'sincerly': 'sincerely',
+      'sucessful': 'successful',
+      'thier': 'their',
+      'wierd': 'weird',
+      'accross': 'across',
+      'adress': 'address',
+      'alot': 'a lot',
+      'arguement': 'argument',
+      'basicly': 'basically',
+      'comming': 'coming',
+      'completly': 'completely',
+      'concious': 'conscious',
+      'dissapear': 'disappear',
+      'embarass': 'embarrass',
+      'exagerate': 'exaggerate',
+      'existance': 'existence',
+      'foriegn': 'foreign',
+      'hieght': 'height',
+      'humerous': 'humorous',
+      'immediatly': 'immediately',
+      'incidently': 'incidentally',
+      'independant': 'independent',
+      'knowlege': 'knowledge',
+      'lisence': 'license',
+      'noticable': 'noticeable',
+      'occuring': 'occurring',
+      'parallel': 'parallel',
+      'persue': 'pursue',
+      'preceed': 'precede',
+      'prefered': 'preferred',
+      'priviledge': 'privilege',
+      'publically': 'publicly',
+      'reccomend': 'recommend',
+      'rythm': 'rhythm',
+      'sence': 'sense',
+      'succesful': 'successful',
+      'suprise': 'surprise',
+      'tendancy': 'tendency',
+      'therefor': 'therefore',
+      'truely': 'truly',
+      'unfortunatly': 'unfortunately',
+      'useable': 'usable'
+    };
+    
+    // Extract words from text
+    const words = text.toLowerCase().match(/\b[a-z]+\b/gi);
+    if (!words) return issues;
+    
+    const foundErrors = new Set();
+    words.forEach(word => {
+      const lower = word.toLowerCase();
+      if (commonMisspellings[lower] && !foundErrors.has(lower)) {
+        foundErrors.add(lower);
+        issues.push({ 
+          word: lower, 
+          suggestion: commonMisspellings[lower],
+          type: 'common_misspelling'
+        });
+      }
+    });
+    
+    // Check for repeated words (e.g., "the the")
+    const repeatedWords = text.match(/\b(\w+)\s+\1\b/gi);
+    if (repeatedWords && repeatedWords.length > 0) {
+      repeatedWords.forEach(match => {
+        if (!foundErrors.has('repeated_' + match.toLowerCase())) {
+          foundErrors.add('repeated_' + match.toLowerCase());
+          issues.push({
+            word: match.trim(),
+            type: 'repeated_word'
+          });
+        }
+      });
+    }
+    
+    return issues;
+  }
+  
+  /**
+   * Checks for sentence structure problems
+   * @param {string} text - Document text
+   * @returns {Array} Array of sentence structure issues
+   */
+  function checkSentenceStructure(text) {
+    const issues = [];
+    
+    // Split into sentences more carefully
+    const sentences = text.split(/[.!?]+/);
+    
+    sentences.forEach((sentence, index) => {
+      const trimmed = sentence.trim();
+      if (trimmed.length === 0) return;
+      
+      // Check for sentences that don't start with a capital letter
+      if (trimmed.length > 0 && /^[a-z]/.test(trimmed)) {
+        issues.push({ type: 'no_capital_start', index: index });
+      }
+      
+      // Check for very short "sentences" that might be incomplete
+      if (trimmed.length > 0 && trimmed.length < 3 && index < sentences.length - 1) {
+        issues.push({ type: 'incomplete_sentence', index: index });
+      }
+      
+      // Check for run-on sentences (very long without proper punctuation)
+      if (trimmed.length > 300 && !/[,;:]/.test(trimmed)) {
+        issues.push({ type: 'possible_runon', index: index });
+      }
+      
+      // Check for sentences ending with multiple punctuation marks inappropriately
+      if (/[.!?]{3,}/.test(sentence)) {
+        issues.push({ type: 'excessive_punctuation', index: index });
+      }
+    });
+    
+    // Check for missing periods at paragraph ends
+    const paragraphs = text.split(/\n\n+/);
+    paragraphs.forEach((para, index) => {
+      const trimmed = para.trim();
+      if (trimmed.length > 10 && !/[.!?]$/.test(trimmed)) {
+        issues.push({ type: 'missing_end_punctuation', paragraph: index });
+      }
+    });
+    
+    return issues;
+  }
+  
   // Helper functions for Slides analysis
   
   function findTextHeavySlides(slides) {
@@ -403,19 +706,25 @@ const DocumentAnalysisEngine = (function() {
    */
   function getDocumentType() {
     try {
-      SpreadsheetApp.getActiveSpreadsheet();
-      return 'SPREADSHEET';
-    } catch (e) {}
+      const doc = DocumentApp.getActiveDocument();
+      if (doc) return 'DOCUMENT';
+    } catch (e) {
+      // Not a document
+    }
     
     try {
-      DocumentApp.getActiveDocument();
-      return 'DOCUMENT';
-    } catch (e) {}
+      const sheet = SpreadsheetApp.getActiveSpreadsheet();
+      if (sheet) return 'SPREADSHEET';
+    } catch (e) {
+      // Not a spreadsheet
+    }
     
     try {
-      SlidesApp.getActivePresentation();
-      return 'PRESENTATION';
-    } catch (e) {}
+      const presentation = SlidesApp.getActivePresentation();
+      if (presentation) return 'PRESENTATION';
+    } catch (e) {
+      // Not a presentation
+    }
     
     return 'UNKNOWN';
   }

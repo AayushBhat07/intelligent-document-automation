@@ -20,6 +20,100 @@ function onOpen(e) {
   const ui = getHostAppUI();
   if (!ui) return;
   
+  // Detect which app we're in and create appropriate menu
+  const docType = DocumentAnalysisEngine.getDocumentType();
+  
+  if (docType === 'DOCUMENT') {
+    createDocsMenu(ui);
+  } else if (docType === 'SPREADSHEET') {
+    createSheetsMenu(ui);
+  } else if (docType === 'PRESENTATION') {
+    createSlidesMenu(ui);
+  } else {
+    // Fallback to generic menu
+    createGenericMenu(ui);
+  }
+}
+
+/**
+ * Creates menu specific to Google Docs
+ */
+function createDocsMenu(ui) {
+  ui.createAddonMenu()
+    .addItem('📋 Open Smart Automation', 'showSidebar')
+    .addSeparator()
+    .addSubMenu(ui.createMenu('📝 Document Tools')
+      .addItem('🔍 Analyze Document', 'analyzeDocument')
+      .addItem('✨ Fix Formatting', 'quickFixFormatting')
+      .addItem('📊 Summarize', 'summarizeDocument'))
+    .addSubMenu(ui.createMenu('🔒 Privacy & Redaction')
+      .addItem('🔍 Detect PII', 'detectPIIInDocument')
+      .addItem('🚫 Redact Sensitive Data', 'redactPIIInDocument'))
+    .addSeparator()
+    .addSubMenu(ui.createMenu('🦙 Ollama AI')
+      .addItem('⚙️ Configure Ollama', 'configureOllama')
+      .addItem('🧪 Test Connection', 'testOllama')
+      .addItem('📖 Setup Guide', 'showOllamaGuide'))
+    .addSeparator()
+    .addItem('⚙️ Settings', 'showSettings')
+    .addItem('❓ Help', 'showHelp')
+    .addToUi();
+}
+
+/**
+ * Creates menu specific to Google Sheets
+ */
+function createSheetsMenu(ui) {
+  ui.createAddonMenu()
+    .addItem('📋 Open Smart Automation', 'showSidebar')
+    .addSeparator()
+    .addSubMenu(ui.createMenu('📊 Data Cleanup')
+      .addItem('🗑️ Remove Duplicates', 'removeDuplicateRows')
+      .addItem('📅 Standardize Dates', 'standardizeDateFormats')
+      .addItem('✨ Fill Empty Cells', 'fillEmptyCellsIntelligently'))
+    .addSubMenu(ui.createMenu('🔍 Data Analysis')
+      .addItem('📈 Analyze Sheet', 'analyzeDocument')
+      .addItem('🔎 Find Anomalies', 'findDataAnomalies'))
+    .addSeparator()
+    .addSubMenu(ui.createMenu('🦙 Ollama AI')
+      .addItem('⚙️ Configure Ollama', 'configureOllama')
+      .addItem('🧪 Test Connection', 'testOllama')
+      .addItem('📖 Setup Guide', 'showOllamaGuide'))
+    .addSeparator()
+    .addItem('⚙️ Settings', 'showSettings')
+    .addItem('❓ Help', 'showHelp')
+    .addToUi();
+}
+
+/**
+ * Creates menu specific to Google Slides
+ */
+function createSlidesMenu(ui) {
+  ui.createAddonMenu()
+    .addItem('📋 Open Smart Automation', 'showSidebar')
+    .addSeparator()
+    .addSubMenu(ui.createMenu('🎨 Presentation Tools')
+      .addItem('🔍 Analyze Slides', 'analyzeDocument')
+      .addItem('🎯 Check Consistency', 'checkSlideConsistency')
+      .addItem('📝 Generate Speaker Notes', 'generateSpeakerNotes'))
+    .addSubMenu(ui.createMenu('📋 Templates')
+      .addItem('📁 Browse Templates', 'showTemplatePicker')
+      .addItem('🎨 Apply Style', 'applyPresentationStyle'))
+    .addSeparator()
+    .addSubMenu(ui.createMenu('🦙 Ollama AI')
+      .addItem('⚙️ Configure Ollama', 'configureOllama')
+      .addItem('🧪 Test Connection', 'testOllama')
+      .addItem('📖 Setup Guide', 'showOllamaGuide'))
+    .addSeparator()
+    .addItem('⚙️ Settings', 'showSettings')
+    .addItem('❓ Help', 'showHelp')
+    .addToUi();
+}
+
+/**
+ * Creates generic menu (fallback)
+ */
+function createGenericMenu(ui) {
   ui.createAddonMenu()
     .addItem('📋 Open Smart Automation', 'showSidebar')
     .addSeparator()

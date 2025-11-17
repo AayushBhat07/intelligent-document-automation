@@ -37,40 +37,26 @@ const SummarizationService = (function() {
         return { success: false, summary: 'No text to summarize' };
       }
       
-      // Decide between local and remote processing
+      // Priority 1: Try AI if configured
+      const aiStatus = SimpleAIService.checkConnection();
+      if (aiStatus.connected) {
+        const result = SimpleAIService.summarizeText(text);
+        if (result.success) return result;
+      }
+      
+      // Priority 2: Use built-in local summarization
       if (text.length <= MAX_LOCAL_LENGTH) {
-        // Use local summarization
         const summary = summarizeLocally(text);
         return { success: true, summary, method: 'local' };
       } else {
-        // Check if user consents to advanced AI
-        const validation = PrivacyGateController.validateDataProcessing('summarize', {});
-        
-        if (validation.allowed) {
-          // Use advanced backend processing
-          const summary = summarizeWithBackend(text);
-          return { success: true, summary, method: 'backend' };
-        } else {
-          // Request consent
-          const granted = PrivacyGateController.requestConsent(
-            'advancedAI',
-            'Document is too long for local processing. Advanced AI can provide better summary.'
-          );
-          
-          if (granted) {
-            const summary = summarizeWithBackend(text);
-            return { success: true, summary, method: 'backend' };
-          } else {
-            // Fall back to local with truncation
-            const truncated = text.substring(0, MAX_LOCAL_LENGTH);
-            const summary = summarizeLocally(truncated);
-            return {
-              success: true,
-              summary: summary + '\n\n[Note: Summary based on first ' + MAX_LOCAL_LENGTH + ' characters due to privacy settings]',
-              method: 'local-truncated'
-            };
-          }
-        }
+        // For long documents without Gemini, truncate and summarize locally
+        const truncated = text.substring(0, MAX_LOCAL_LENGTH);
+        const summary = summarizeLocally(truncated);
+        return {
+          success: true,
+          summary: summary + '\n\n[Note: Summary based on first ' + MAX_LOCAL_LENGTH + ' characters. Configure Gemini API for full document processing.]',
+          method: 'local-truncated'
+        };
       }
     } catch (e) {
       console.error('Error summarizing document:', e);
