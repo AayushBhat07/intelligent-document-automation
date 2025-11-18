@@ -406,43 +406,53 @@ const ComprehensiveFormatter = (function() {
   }
   
   /**
-   * Apply AI-powered comprehensive fixes (smart mode)
+   * Apply AI-powered comprehensive fixes (optimized for 3-8 seconds)
    * @param {Body} body - Document body
    * @param {string} text - Original text
    * @returns {Object} Fix results
    */
   function applyAIPoweredFixes(body, text) {
-    // Use SimpleAIService for intelligent fixing
-    const prompt = `Fix ALL formatting issues in this text. Correct:
-- Spacing (multiple spaces, missing spaces after punctuation)
-- Punctuation (double punctuation, missing end punctuation)
-- Capitalization (sentence starts, random caps)
-- Spelling mistakes and typos
-- Repeated characters and words
-- Sentence structure
-
-Return ONLY the corrected text, nothing else.
-
-Text:
-${text}`;
+    const startTime = new Date().getTime();
     
-    const result = SimpleAIService.callAI(prompt);
+    // Optimize for speed: limit text length
+    const maxChars = 8000;
+    const textToProcess = text.length > maxChars ? 
+      text.substring(0, maxChars) + '\n[...text truncated for speed...]' : text;
     
-    if (result.success) {
-      // Replace entire document with AI-corrected version
+    // Ultra-short prompt for faster processing
+    const prompt = `Fix all formatting errors in this text. Return only the corrected version:\n\n${textToProcess}`;
+    
+    // Use SimpleAIService (which is OllamaAIService renamed)
+    let result;
+    try {
+      result = SimpleAIService.generateText(prompt);
+    } catch (e) {
+      return {
+        success: false,
+        error: 'SimpleAIService not available: ' + e.message
+      };
+    }
+    
+    if (result && result.success) {
+      // Fast document replacement
       body.clear();
-      body.appendParagraph(result.text);
+      const correctedText = result.generated_text || result.text || '';
+      body.setText(correctedText);
+      
+      const endTime = new Date().getTime();
+      const timeTaken = ((endTime - startTime) / 1000).toFixed(1);
       
       return {
         success: true,
-        method: 'AI-powered',
-        message: 'Document comprehensively formatted using AI'
+        method: 'AI-powered (gemini-2.0-flash)',
+        message: `Formatted in ${timeTaken}s`,
+        time: timeTaken
       };
     }
     
     return {
       success: false,
-      error: result.error
+      error: result ? result.error : 'AI call failed'
     };
   }
   

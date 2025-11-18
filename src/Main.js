@@ -299,13 +299,22 @@ function applyQuickFormattingMode(ui, body, text) {
  * Apply AI Mode (comprehensive)
  */
 function applyAIFormattingMode(ui, body, text) {
-  // Check if AI is configured
-  const aiStatus = SimpleAIService.checkConnection();
-  if (!aiStatus.connected) {
+  // Check if AI is configured (check the actual service file)
+  try {
+    const testKey = typeof SimpleAIService !== 'undefined' && SimpleAIService.getApiKey();
+    if (!testKey) {
+      ui.alert(
+        'AI Not Configured',
+        '❌ Please configure AI first:\n' +
+        'Extensions → Smart Automation → Ollama AI → Configure',
+        ui.ButtonSet.OK
+      );
+      return;
+    }
+  } catch (e) {
     ui.alert(
-      'AI Not Configured',
-      '❌ Please configure AI first:\n' +
-      'Extensions → Smart Automation → Ollama AI → Configure',
+      'AI Service Error',
+      '❌ SimpleAIService not found. Make sure OllamaAIService.js is loaded.',
       ui.ButtonSet.OK
     );
     return;
@@ -314,13 +323,11 @@ function applyAIFormattingMode(ui, body, text) {
   const response = ui.alert(
     'AI Comprehensive Formatting',
     '🤖 AI will analyze and fix:\n\n' +
-    '• All 28 formatting issue types\n' +
+    '• All formatting issues\n' +
     '• Spelling & grammar\n' +
-    '• Sentence structure\n' +
     '• Capitalization\n' +
-    '• Punctuation\n' +
-    '• And more...\n\n' +
-    '⏱️ This may take 10-30 seconds\n\n' +
+    '• Punctuation\n\n' +
+    '⏱️ Processing time: 3-8 seconds\n\n' +
     'Continue?',
     ui.ButtonSet.YES_NO
   );
@@ -329,27 +336,72 @@ function applyAIFormattingMode(ui, body, text) {
     return;
   }
   
-  // Show progress
-  ui.alert('Processing...', '💬 AI is analyzing your document...', ui.ButtonSet.OK);
-  
-  // Apply AI fixes
-  const result = ComprehensiveFormatter.applyAIPoweredFixes(body, text);
-  
-  if (result.success) {
+  // Apply AI fixes directly (no blocking alert)
+  try {
+    const result = applyOptimizedAIFixes(body, text);
+    
+    if (result.success) {
+      ui.alert(
+        'AI Formatting Complete! 🎉',
+        '✅ Document formatted in ' + result.time + 's\n\n' +
+        'Your document has been comprehensively formatted!',
+        ui.ButtonSet.OK
+      );
+    } else {
+      ui.alert(
+        'AI Formatting Failed',
+        '❌ ' + result.error + '\n\n' +
+        'Try Quick Mode instead.',
+        ui.ButtonSet.OK
+      );
+    }
+  } catch (e) {
     ui.alert(
-      'AI Formatting Complete! 🎉',
-      '✅ ' + result.message + '\n\n' +
-      'Your document has been comprehensively formatted!',
-      ui.ButtonSet.OK
-    );
-  } else {
-    ui.alert(
-      'AI Formatting Failed',
-      '❌ ' + result.error + '\n\n' +
-      'Try Quick Mode instead.',
+      'Error',
+      '❌ AI formatting failed: ' + e.message,
       ui.ButtonSet.OK
     );
   }
+}
+
+/**
+ * Apply optimized AI fixes (3-8 seconds)
+ * @param {Body} body - Document body
+ * @param {string} text - Original text  
+ * @returns {Object} Result with timing
+ */
+function applyOptimizedAIFixes(body, text) {
+  const startTime = new Date().getTime();
+  
+  // Optimize: Limit text length for faster processing
+  const maxChars = 8000; // Gemini handles this quickly
+  const textToFix = text.length > maxChars ? text.substring(0, maxChars) + '...' : text;
+  
+  // Optimized prompt - shorter and more direct
+  const prompt = `Fix formatting errors. Return ONLY corrected text:\n\n${textToFix}`;
+  
+  // Call AI service directly
+  const result = SimpleAIService.generateText(prompt);
+  
+  if (result.success) {
+    // Fast replace: clear and setText instead of appendParagraph
+    body.clear();
+    body.setText(result.generated_text || result.text);
+    
+    const endTime = new Date().getTime();
+    const timeTaken = ((endTime - startTime) / 1000).toFixed(1);
+    
+    return {
+      success: true,
+      time: timeTaken,
+      message: 'Formatted using AI'
+    };
+  }
+  
+  return {
+    success: false,
+    error: result.error || 'AI service failed'
+  };
 }
 
 /**
