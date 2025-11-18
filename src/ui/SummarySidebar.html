@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: 'Google Sans', Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #fff;
+      color: #202124;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin: -16px -16px 16px -16px;
+    }
+    
+    .header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 500;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      background: #f1f3f4;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1a73e8;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 4px;
+    }
+    
+    .summary-section {
+      background: #fff;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .summary-section h4 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #202124;
+    }
+    
+    .summary-text {
+      color: #5f6368;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    .method-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    
+    .method-ai {
+      background: #e8f0fe;
+      color: #1a73e8;
+    }
+    
+    .method-local {
+      background: #e6f4ea;
+      color: #1e8e3e;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #5f6368;
+    }
+    
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #1a73e8;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error {
+      background: #fef7f7;
+      border: 1px solid #f28b82;
+      color: #c5221f;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h3>📊 Document Summary</h3>
+  </div>
+  
+  <div id="content">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Generating summary...</p>
+    </div>
+  </div>
+  
+  <script>
+    // Load summary on startup
+    google.script.run
+      .withSuccessHandler(displaySummary)
+      .withFailureHandler(showError)
+      .getDocumentSummary();
+    
+    function displaySummary(data) {
+      if (!data.success) {
+        showError(data);
+        return;
+      }
+      
+      const content = document.getElementById('content');
+      
+      let html = `
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-value">${data.wordCount || 0}</div>
+            <div class="stat-label">Words</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${Math.ceil((data.charCount || 0) / 1000)}k</div>
+            <div class="stat-label">Characters</div>
+          </div>
+        </div>
+        
+        <div class="summary-section">
+          <h4>📝 Summary</h4>
+          <div class="summary-text">${escapeHtml(data.summary || 'No summary available.')}</div>
+          <div class="method-badge ${data.method === 'google_ai' || data.method === 'AI-powered' ? 'method-ai' : 'method-local'}">
+            ${data.method === 'google_ai' || data.method === 'AI-powered' ? '🤖 AI Generated' : '📋 Local Summary'}
+          </div>
+        </div>
+      `;
+      
+      if (data.sentenceCount) {
+        html = html.replace('</div>\n        </div>', `
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${data.sentenceCount}</div>
+            <div class="stat-label">Sentences</div>
+          </div>
+        </div>`);
+      }
+      
+      content.innerHTML = html;
+    }
+    
+    function showError(error) {
+      document.getElementById('content').innerHTML = `
+        <div class="error">
+          <strong>❌ Error</strong><br>
+          ${error.error || error.message || 'Failed to generate summary'}
+        </div>
+      `;
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

@@ -161,6 +161,78 @@ function showSidebar() {
 }
 
 /**
+ * Show document summary in sidebar
+ */
+function summarizeDocument() {
+  const ui = getHostAppUI();
+  if (!ui) return;
+  
+  try {
+    const doc = DocumentApp.getActiveDocument();
+    const text = doc.getBody().getText();
+    
+    if (!text || text.trim().length === 0) {
+      ui.alert('No Content', 'Document is empty.', ui.ButtonSet.OK);
+      return;
+    }
+    
+    // Show sidebar with summary
+    const html = HtmlService.createHtmlOutputFromFile('SummarySidebar')
+      .setTitle('📊 Document Summary')
+      .setWidth(350);
+    
+    ui.showSidebar(html);
+    
+  } catch (e) {
+    ui.alert('Error', '❌ Could not summarize: ' + e.message, ui.ButtonSet.OK);
+  }
+}
+
+/**
+ * Get document summary for sidebar
+ */
+function getDocumentSummary() {
+  try {
+    const doc = DocumentApp.getActiveDocument();
+    const text = doc.getBody().getText();
+    
+    // Use SummarizationService
+    const result = SummarizationService.summarizeText(text, {
+      maxLength: 200,
+      style: 'concise'
+    });
+    
+    if (result && result.success) {
+      return {
+        success: true,
+        summary: result.summary,
+        method: result.method || 'local',
+        wordCount: text.split(/\s+/).length,
+        charCount: text.length
+      };
+    }
+    
+    // Fallback to basic summary
+    const words = text.split(/\s+/).length;
+    const sentences = text.split(/[.!?]+/).length;
+    
+    return {
+      success: true,
+      summary: text.substring(0, 300) + '...',
+      method: 'excerpt',
+      wordCount: words,
+      charCount: text.length,
+      sentenceCount: sentences
+    };
+  } catch (e) {
+    return {
+      success: false,
+      error: e.message
+    };
+  }
+}
+
+/**
  * Shows settings dialog
  */
 function showSettings() {
@@ -386,8 +458,21 @@ function applyOptimizedAIFixes(body, text) {
   const maxChars = 8000;
   const textToFix = text.length > maxChars ? text.substring(0, maxChars) + '...' : text;
   
-  // Optimized prompt - shorter and more direct
-  const prompt = `Fix formatting errors. Return ONLY corrected text:\n\n${textToFix}`;
+  // Optimized prompt - ENHANCED with specific formatting rules
+  const prompt = `Fix ALL formatting errors in this text. Focus on:
+- Mid-word spacing (fix: "t h i s" → "this")
+- Mixed ellipsis (fix: "kinda…." → "kinda...")
+- Capitalization after punctuation
+- Double punctuation variations (fix: "!!??" → "!")
+- Inconsistent punctuation emphasis (fix: "???" → "?")
+- Lowercase sentence starts
+- Run-on sentences (break if >200 chars)
+- Grammar-formatting hybrid errors
+- Incorrect punctuation endings
+
+Return ONLY the corrected text:
+
+${textToFix}`;
   
   // Call AI service directly
   const result = SimpleAIService.generateText(prompt);
@@ -491,7 +576,7 @@ function saveDocumentVersion(text) {
 }
 
 /**
- * Restore previous document version
+ * Restore previous document version with full content preview
  */
 function restorePreviousVersion() {
   const ui = getHostAppUI();
@@ -505,7 +590,11 @@ function restorePreviousVersion() {
     for (let i = 1; i <= 5; i++) {
       const versionData = userProps.getProperty('DOC_VERSION_' + i);
       if (versionData) {
-        versions.push(JSON.parse(versionData));
+        try {
+          versions.push(JSON.parse(versionData));
+        } catch (e) {
+          Logger.log('Error parsing version ' + i + ': ' + e.message);
+        }
       }
     }
     
@@ -518,45 +607,80 @@ function restorePreviousVersion() {
       return;
     }
     
-    // Show version list
-    let message = 'Available Versions:\n\n';
-    versions.forEach((v, idx) => {
-      message += `${idx + 1}. ${v.date}\n`;
-    });
-    message += '\nEnter version number to restore (1-' + versions.length + '):';
+    // Show version selection with content preview
+    showVersionPreviewDialog(versions);
     
-    const response = ui.prompt(
-      'Restore Previous Version',
-      message,
-      ui.ButtonSet.OK_CANCEL
-    );
-    
-    if (response.getSelectedButton() === ui.Button.OK) {
-      const versionNum = parseInt(response.getResponseText());
-      
-      if (versionNum >= 1 && versionNum <= versions.length) {
-        const doc = DocumentApp.getActiveDocument();
-        const body = doc.getBody();
-        const selectedVersion = versions[versionNum - 1];
-        
-        // Restore the version
-        replaceDocumentText(body, selectedVersion.text);
-        
-        ui.alert(
-          'Version Restored! ⏪',
-          `✅ Restored version from:\n${selectedVersion.date}`,
-          ui.ButtonSet.OK
-        );
-      } else {
-        ui.alert('Invalid Selection', 'Please enter a valid version number.', ui.ButtonSet.OK);
-      }
-    }
   } catch (e) {
     ui.alert(
       'Error',
-      '❌ Could not restore version: ' + e.message,
+      '❌ Could not load versions: ' + e.message,
       ui.ButtonSet.OK
     );
+  }
+}
+
+/**
+ * Show version preview dialog with HTML
+ */
+function showVersionPreviewDialog(versions) {
+  // Store versions temporarily for HTML access
+  const userProps = PropertiesService.getUserProperties();
+  userProps.setProperty('TEMP_VERSIONS', JSON.stringify(versions));
+  
+  const html = HtmlService.createHtmlOutputFromFile('VersionPreview')
+    .setWidth(700)
+    .setHeight(600);
+  
+  const ui = getHostAppUI();
+  if (ui) {
+    ui.showModalDialog(html, '⏪ Restore Previous Version');
+  }
+}
+
+/**
+ * Get versions for preview HTML
+ */
+function getVersionsForPreview() {
+  const userProps = PropertiesService.getUserProperties();
+  const versionsJson = userProps.getProperty('TEMP_VERSIONS');
+  return versionsJson ? JSON.parse(versionsJson) : [];
+}
+
+/**
+ * Restore specific version by index
+ */
+function restoreVersionByIndex(index) {
+  try {
+    const userProps = PropertiesService.getUserProperties();
+    const versionsJson = userProps.getProperty('TEMP_VERSIONS');
+    const versions = versionsJson ? JSON.parse(versionsJson) : [];
+    
+    if (index >= 0 && index < versions.length) {
+      const doc = DocumentApp.getActiveDocument();
+      const body = doc.getBody();
+      const selectedVersion = versions[index];
+      
+      // Restore the version
+      replaceDocumentText(body, selectedVersion.text);
+      
+      // Clean up temp data
+      userProps.deleteProperty('TEMP_VERSIONS');
+      
+      return {
+        success: true,
+        message: 'Version from ' + selectedVersion.date + ' restored!'
+      };
+    }
+    
+    return {
+      success: false,
+      message: 'Invalid version index'
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: 'Error: ' + e.message
+    };
   }
 }
 

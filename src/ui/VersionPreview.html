@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: 'Google Sans', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px 8px 0 0;
+      margin: -20px -20px 20px -20px;
+    }
+    
+    .header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+    
+    .version-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .version-card {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .version-card:hover {
+      border-color: #1a73e8;
+      box-shadow: 0 2px 8px rgba(26, 115, 232, 0.2);
+    }
+    
+    .version-card.selected {
+      border-color: #1a73e8;
+      background: #e8f0fe;
+    }
+    
+    .version-date {
+      font-weight: 600;
+      color: #1967d2;
+      margin-bottom: 8px;
+    }
+    
+    .version-preview {
+      max-height: 120px;
+      overflow: hidden;
+      position: relative;
+      color: #5f6368;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    
+    .version-preview::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: linear-gradient(transparent, #f8f9fa);
+    }
+    
+    .version-length {
+      font-size: 11px;
+      color: #80868b;
+      margin-top: 4px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      position: sticky;
+      bottom: 0;
+      background: white;
+      padding: 16px;
+      border-top: 1px solid #e0e0e0;
+      margin: 0 -20px -20px -20px;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #1a73e8;
+      color: white;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      background: #1765cc;
+    }
+    
+    .btn-primary:disabled {
+      background: #dadce0;
+      cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+      background: white;
+      color: #5f6368;
+      border: 1px solid #dadce0;
+    }
+    
+    .btn-secondary:hover {
+      background: #f8f9fa;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #5f6368;
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>⏪ Restore Previous Version</h2>
+  </div>
+  
+  <div id="content">
+    <div class="empty-state">
+      <div class="empty-state-icon">⏳</div>
+      <p>Loading versions...</p>
+    </div>
+  </div>
+  
+  <div class="action-buttons">
+    <button class="btn btn-secondary" onclick="cancel()">Cancel</button>
+    <button class="btn btn-primary" onclick="restore()" id="restore-btn" disabled>Restore Selected</button>
+  </div>
+  
+  <script>
+    let selectedIndex = -1;
+    let versions = [];
+    
+    // Load versions on startup
+    google.script.run
+      .withSuccessHandler(displayVersions)
+      .withFailureHandler(showError)
+      .getVersionsForPreview();
+    
+    function displayVersions(versionList) {
+      versions = versionList;
+      const content = document.getElementById('content');
+      
+      if (!versions || versions.length === 0) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <h3>No Versions Available</h3>
+            <p>Versions are saved automatically before each AI format operation.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      let html = '<div class="version-list">';
+      
+      versions.forEach((version, index) => {
+        const preview = version.text.substring(0, 200);
+        const wordCount = version.text.split(/\s+/).length;
+        const charCount = version.text.length;
+        
+        html += `
+          <div class="version-card" onclick="selectVersion(${index})">
+            <div class="version-date">📅 ${version.date}</div>
+            <div class="version-preview">${escapeHtml(preview)}...</div>
+            <div class="version-length">
+              ${wordCount} words • ${charCount} characters
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      content.innerHTML = html;
+    }
+    
+    function selectVersion(index) {
+      selectedIndex = index;
+      
+      // Update UI
+      const cards = document.querySelectorAll('.version-card');
+      cards.forEach((card, idx) => {
+        if (idx === index) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      });
+      
+      document.getElementById('restore-btn').disabled = false;
+    }
+    
+    function restore() {
+      if (selectedIndex === -1) return;
+      
+      const btn = document.getElementById('restore-btn');
+      btn.disabled = true;
+      btn.textContent = 'Restoring...';
+      
+      google.script.run
+        .withSuccessHandler(handleRestoreSuccess)
+        .withFailureHandler(handleRestoreError)
+        .restoreVersionByIndex(selectedIndex);
+    }
+    
+    function handleRestoreSuccess(result) {
+      if (result.success) {
+        google.script.host.close();
+        alert('✅ ' + result.message);
+      } else {
+        alert('❌ ' + result.message);
+        document.getElementById('restore-btn').disabled = false;
+        document.getElementById('restore-btn').textContent = 'Restore Selected';
+      }
+    }
+    
+    function handleRestoreError(error) {
+      alert('❌ Error: ' + error.message);
+      document.getElementById('restore-btn').disabled = false;
+      document.getElementById('restore-btn').textContent = 'Restore Selected';
+    }
+    
+    function showError(error) {
+      document.getElementById('content').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">❌</div>
+          <h3>Error Loading Versions</h3>
+          <p>${error.message}</p>
+        </div>
+      `;
+    }
+    
+    function cancel() {
+      google.script.host.close();
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
