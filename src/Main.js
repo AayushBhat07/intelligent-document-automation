@@ -45,6 +45,7 @@ function createDocsMenu(ui) {
     .addSubMenu(ui.createMenu('📝 Document Tools')
       .addItem('🔍 Analyze Document', 'analyzeDocument')
       .addItem('⚡ Quick Fix (Fast)', 'quickFixFormatting')
+      .addItem('⏪ Restore Version', 'restorePreviousVersion')
       .addItem('📊 Summarize', 'summarizeDocument'))
     .addSubMenu(ui.createMenu('🔒 Privacy & Redaction')
       .addItem('🔍 Detect PII', 'detectPIIInDocument')
@@ -341,10 +342,15 @@ function applyAIFormattingMode(ui, body, text) {
     const result = applyOptimizedAIFixes(body, text);
     
     if (result.success) {
+      const changesMsg = result.changesMade ? 
+        '✅ Changes applied to document!' : 
+        '⚠️ No changes were made (document may already be formatted)';
+      
       ui.alert(
         'AI Formatting Complete! 🎉',
-        '✅ Document formatted in ' + result.time + 's\n\n' +
-        'Your document has been comprehensively formatted!',
+        changesMsg + '\n\n' +
+        `Processing time: ${result.time}s\n\n` +
+        '💾 Version saved - use "Restore Version" to undo',
         ui.ButtonSet.OK
       );
     } else {
@@ -373,8 +379,11 @@ function applyAIFormattingMode(ui, body, text) {
 function applyOptimizedAIFixes(body, text) {
   const startTime = new Date().getTime();
   
+  // SAVE VERSION BEFORE CHANGES
+  saveDocumentVersion(text);
+  
   // Optimize: Limit text length for faster processing
-  const maxChars = 8000; // Gemini handles this quickly
+  const maxChars = 8000;
   const textToFix = text.length > maxChars ? text.substring(0, maxChars) + '...' : text;
   
   // Optimized prompt - shorter and more direct
@@ -384,9 +393,10 @@ function applyOptimizedAIFixes(body, text) {
   const result = SimpleAIService.generateText(prompt);
   
   if (result.success) {
-    // Fast replace: clear and setText instead of appendParagraph
-    body.clear();
-    body.setText(result.generated_text || result.text);
+    const correctedText = result.generated_text || result.text;
+    
+    // APPLY CHANGES IMMEDIATELY (before success dialog)
+    const changesMade = replaceDocumentText(body, correctedText);
     
     const endTime = new Date().getTime();
     const timeTaken = ((endTime - startTime) / 1000).toFixed(1);
@@ -394,6 +404,7 @@ function applyOptimizedAIFixes(body, text) {
     return {
       success: true,
       time: timeTaken,
+      changesMade: changesMade,
       message: 'Formatted using AI'
     };
   }
@@ -402,6 +413,151 @@ function applyOptimizedAIFixes(body, text) {
     success: false,
     error: result.error || 'AI service failed'
   };
+}
+
+/**
+ * Replace document text properly using DocumentApp API
+ * @param {Body} body - Document body
+ * @param {string} newText - New text to insert
+ * @returns {boolean} Whether changes were made
+ */
+function replaceDocumentText(body, newText) {
+  if (!newText || newText.trim().length === 0) {
+    return false;
+  }
+  
+  try {
+    // Method 1: Clear all and rebuild (preserves formatting better)
+    const numChildren = body.getNumChildren();
+    
+    // Remove all existing content
+    for (let i = numChildren - 1; i >= 0; i--) {
+      body.removeChild(body.getChild(i));
+    }
+    
+    // Split by newlines and add as paragraphs
+    const lines = newText.split('\n');
+    lines.forEach(line => {
+      if (line.trim().length > 0) {
+        body.appendParagraph(line);
+      } else {
+        body.appendParagraph(''); // Empty paragraph for spacing
+      }
+    });
+    
+    return true;
+  } catch (e) {
+    Logger.log('Error replacing text: ' + e.message);
+    return false;
+  }
+}
+
+/**
+ * Save document version for undo functionality
+ * @param {string} text - Document text to save
+ */
+function saveDocumentVersion(text) {
+  try {
+    const userProps = PropertiesService.getUserProperties();
+    const timestamp = new Date().getTime();
+    
+    // Keep last 5 versions
+    const versions = [];
+    for (let i = 1; i <= 4; i++) {
+      const oldVersion = userProps.getProperty('DOC_VERSION_' + i);
+      if (oldVersion) {
+        versions.push(oldVersion);
+      }
+    }
+    
+    // Add new version at front
+    const newVersion = JSON.stringify({
+      timestamp: timestamp,
+      text: text,
+      date: new Date().toLocaleString()
+    });
+    
+    versions.unshift(newVersion);
+    
+    // Save back (keep only 5 most recent)
+    for (let i = 0; i < Math.min(5, versions.length); i++) {
+      userProps.setProperty('DOC_VERSION_' + (i + 1), versions[i]);
+    }
+    
+    Logger.log('Version saved: ' + new Date().toLocaleString());
+  } catch (e) {
+    Logger.log('Error saving version: ' + e.message);
+  }
+}
+
+/**
+ * Restore previous document version
+ */
+function restorePreviousVersion() {
+  const ui = getHostAppUI();
+  if (!ui) return;
+  
+  try {
+    const userProps = PropertiesService.getUserProperties();
+    const versions = [];
+    
+    // Get all saved versions
+    for (let i = 1; i <= 5; i++) {
+      const versionData = userProps.getProperty('DOC_VERSION_' + i);
+      if (versionData) {
+        versions.push(JSON.parse(versionData));
+      }
+    }
+    
+    if (versions.length === 0) {
+      ui.alert(
+        'No Versions Available',
+        '❌ No previous versions found.\n\nVersions are saved automatically before each AI format operation.',
+        ui.ButtonSet.OK
+      );
+      return;
+    }
+    
+    // Show version list
+    let message = 'Available Versions:\n\n';
+    versions.forEach((v, idx) => {
+      message += `${idx + 1}. ${v.date}\n`;
+    });
+    message += '\nEnter version number to restore (1-' + versions.length + '):';
+    
+    const response = ui.prompt(
+      'Restore Previous Version',
+      message,
+      ui.ButtonSet.OK_CANCEL
+    );
+    
+    if (response.getSelectedButton() === ui.Button.OK) {
+      const versionNum = parseInt(response.getResponseText());
+      
+      if (versionNum >= 1 && versionNum <= versions.length) {
+        const doc = DocumentApp.getActiveDocument();
+        const body = doc.getBody();
+        const selectedVersion = versions[versionNum - 1];
+        
+        // Restore the version
+        replaceDocumentText(body, selectedVersion.text);
+        
+        ui.alert(
+          'Version Restored! ⏪',
+          `✅ Restored version from:\n${selectedVersion.date}`,
+          ui.ButtonSet.OK
+        );
+      } else {
+        ui.alert('Invalid Selection', 'Please enter a valid version number.', ui.ButtonSet.OK);
+      }
+    }
+  } catch (e) {
+    ui.alert(
+      'Error',
+      '❌ Could not restore version: ' + e.message,
+      ui.ButtonSet.OK
+    );
+  }
 }
 
 /**

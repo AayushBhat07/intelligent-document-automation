@@ -434,10 +434,32 @@ const ComprehensiveFormatter = (function() {
     }
     
     if (result && result.success) {
-      // Fast document replacement
-      body.clear();
       const correctedText = result.generated_text || result.text || '';
-      body.setText(correctedText);
+      
+      // Proper document replacement using DocumentApp API
+      try {
+        const numChildren = body.getNumChildren();
+        
+        // Remove all existing content
+        for (let i = numChildren - 1; i >= 0; i--) {
+          body.removeChild(body.getChild(i));
+        }
+        
+        // Split by newlines and add as paragraphs
+        const lines = correctedText.split('\n');
+        lines.forEach(line => {
+          if (line.trim().length > 0) {
+            body.appendParagraph(line);
+          } else {
+            body.appendParagraph('');
+          }
+        });
+      } catch (e) {
+        return {
+          success: false,
+          error: 'Failed to update document: ' + e.message
+        };
+      }
       
       const endTime = new Date().getTime();
       const timeTaken = ((endTime - startTime) / 1000).toFixed(1);
