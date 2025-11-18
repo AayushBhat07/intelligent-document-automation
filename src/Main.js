@@ -44,7 +44,7 @@ function createDocsMenu(ui) {
     .addSeparator()
     .addSubMenu(ui.createMenu('📝 Document Tools')
       .addItem('🔍 Analyze Document', 'analyzeDocument')
-      .addItem('✨ Fix Formatting', 'quickFixFormatting')
+      .addItem('⚡ Quick Fix (Fast)', 'quickFixFormatting')
       .addItem('📊 Summarize', 'summarizeDocument'))
     .addSubMenu(ui.createMenu('🔒 Privacy & Redaction')
       .addItem('🔍 Detect PII', 'detectPIIInDocument')
@@ -207,6 +207,571 @@ function showHelp() {
       ui.ButtonSet.OK
     );
   }
+}
+
+/**
+ * Quick fix common formatting issues (Fast Mode - Regex)
+ */
+function quickFixFormatting() {
+  const ui = getHostAppUI();
+  if (!ui) return;
+  
+  const response = ui.alert(
+    'Choose Formatting Mode',
+    '⚡ QUICK MODE (Instant)\n' +
+    'Uses regex patterns, fixes common issues fast\n\n' +
+    '🤖 AI MODE (Comprehensive)\n' +
+    'Uses AI to intelligently fix ALL 28 issue types\n' +
+    'Slower but much more thorough\n\n' +
+    'Choose Quick Mode?',
+    ui.ButtonSet.YES_NO_CANCEL
+  );
+  
+  if (response === ui.Button.CANCEL) {
+    return;
+  }
+  
+  const useAI = (response === ui.Button.NO);
+  
+  try {
+    const doc = DocumentApp.getActiveDocument();
+    const body = doc.getBody();
+    const text = body.getText();
+    
+    if (useAI) {
+      // AI-Powered Mode
+      applyAIFormattingMode(ui, body, text);
+    } else {
+      // Quick Regex Mode
+      applyQuickFormattingMode(ui, body, text);
+    }
+    
+  } catch (e) {
+    ui.alert(
+      'Error',
+      '❌ Could not analyze formatting: ' + e.message,
+      ui.ButtonSet.OK
+    );
+  }
+}
+
+/**
+ * Apply Quick Mode (regex-based)
+ */
+function applyQuickFormattingMode(ui, body, text) {
+  // Analyze issues
+  const issues = ComprehensiveFormatter.analyzeAllIssues(text, false);
+  
+  if (issues.totalCount === 0) {
+    ui.alert(
+      'No Issues Found',
+      '✅ Your document formatting looks great!',
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+  
+  // Show quick summary
+  const summary = buildQuickIssueSummary(issues);
+  const response = ui.alert(
+    'Quick Mode - Fix ' + issues.totalCount + ' Issues?',
+    summary + '\n\nApply fixes now?',
+    ui.ButtonSet.YES_NO
+  );
+  
+  if (response !== ui.Button.YES) {
+    return;
+  }
+  
+  // Apply quick fixes
+  const results = ComprehensiveFormatter.applyQuickFixes(body, issues);
+  const totalFixed = Object.values(results).reduce((sum, val) => sum + (val || 0), 0);
+  
+  ui.alert(
+    'Quick Fix Complete! ⚡',
+    `✅ Fixed ${totalFixed} issues in < 1 second\n\n` +
+    buildResultsSummary(results),
+    ui.ButtonSet.OK
+  );
+}
+
+/**
+ * Apply AI Mode (comprehensive)
+ */
+function applyAIFormattingMode(ui, body, text) {
+  // Check if AI is configured
+  const aiStatus = SimpleAIService.checkConnection();
+  if (!aiStatus.connected) {
+    ui.alert(
+      'AI Not Configured',
+      '❌ Please configure AI first:\n' +
+      'Extensions → Smart Automation → Ollama AI → Configure',
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+  
+  const response = ui.alert(
+    'AI Comprehensive Formatting',
+    '🤖 AI will analyze and fix:\n\n' +
+    '• All 28 formatting issue types\n' +
+    '• Spelling & grammar\n' +
+    '• Sentence structure\n' +
+    '• Capitalization\n' +
+    '• Punctuation\n' +
+    '• And more...\n\n' +
+    '⏱️ This may take 10-30 seconds\n\n' +
+    'Continue?',
+    ui.ButtonSet.YES_NO
+  );
+  
+  if (response !== ui.Button.YES) {
+    return;
+  }
+  
+  // Show progress
+  ui.alert('Processing...', '💬 AI is analyzing your document...', ui.ButtonSet.OK);
+  
+  // Apply AI fixes
+  const result = ComprehensiveFormatter.applyAIPoweredFixes(body, text);
+  
+  if (result.success) {
+    ui.alert(
+      'AI Formatting Complete! 🎉',
+      '✅ ' + result.message + '\n\n' +
+      'Your document has been comprehensively formatted!',
+      ui.ButtonSet.OK
+    );
+  } else {
+    ui.alert(
+      'AI Formatting Failed',
+      '❌ ' + result.error + '\n\n' +
+      'Try Quick Mode instead.',
+      ui.ButtonSet.OK
+    );
+  }
+}
+
+/**
+ * Build quick issue summary
+ */
+function buildQuickIssueSummary(issues) {
+  let summary = '🔍 Found:\n';
+  
+  if (issues.multipleSpaces.length > 0) {
+    summary += `• ${issues.multipleSpaces.length} multiple spaces\n`;
+  }
+  if (issues.missingSpaceAfterPunct.length > 0) {
+    summary += `• ${issues.missingSpaceAfterPunct.length} missing spaces after punctuation\n`;
+  }
+  if (issues.spaceBeforePunct.length > 0) {
+    summary += `• ${issues.spaceBeforePunct.length} spaces before punctuation\n`;
+  }
+  if (issues.doublePunctuation.length > 0) {
+    summary += `• ${issues.doublePunctuation.length} double punctuation\n`;
+  }
+  if (issues.repeatedWords.length > 0) {
+    summary += `• ${issues.repeatedWords.length} repeated words\n`;
+  }
+  if (issues.spacedLetters.length > 0) {
+    summary += `• ${issues.spacedLetters.length} spaced-out words\n`;
+  }
+  if (issues.randomCapsInWords.length > 0) {
+    summary += `• ${issues.randomCapsInWords.length} random capitals\n`;
+  }
+  if (issues.invisibleChars.length > 0) {
+    summary += `• ${issues.invisibleChars.length} invisible characters\n`;
+  }
+  
+  return summary;
+}
+
+/**
+ * Build results summary
+ */
+function buildResultsSummary(results) {
+  let summary = '';
+  Object.keys(results).forEach(key => {
+    if (results[key] > 0) {
+      summary += `• ${results[key]} ${formatKeyName(key)}\n`;
+    }
+  });
+  return summary;
+}
+
+/**
+ * Format key name for display
+ */
+function formatKeyName(key) {
+  return key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+}
+
+/**
+ * Get formatting preview data for HTML modal
+ * Called from FormattingPreview.html
+ * @returns {Object} Issues data with examples
+ */
+function getFormattingPreviewData() {
+  const userProps = PropertiesService.getUserProperties();
+  const text = userProps.getProperty('FORMATTING_PREVIEW_TEXT');
+  
+  if (!text) {
+    return { totalCount: 0, examples: [] };
+  }
+  
+  return analyzeFormattingIssues(text);
+}
+
+/**
+ * Apply formatting fixes after user confirms from preview modal
+ * Called from FormattingPreview.html
+ */
+function applyFormattingFixesFromPreview() {
+  const ui = getHostAppUI();
+  if (!ui) return;
+  
+  try {
+    const doc = DocumentApp.getActiveDocument();
+    const body = doc.getBody();
+    const userProps = PropertiesService.getUserProperties();
+    const text = userProps.getProperty('FORMATTING_PREVIEW_TEXT');
+    
+    if (!text) {
+      ui.alert('Error', 'Preview data not found.', ui.ButtonSet.OK);
+      return;
+    }
+    
+    // Apply fixes
+    const fixResults = applyFormattingFixes(body, text);
+    
+    // Clean up stored data
+    userProps.deleteProperty('FORMATTING_PREVIEW_TEXT');
+    
+    // Show results
+    ui.alert(
+      'Formatting Fixed! ✨',
+      buildFixResultsMessage(fixResults),
+      ui.ButtonSet.OK
+    );
+    
+  } catch (e) {
+    ui.alert(
+      'Error',
+      '❌ Could not apply fixes: ' + e.message,
+      ui.ButtonSet.OK
+    );
+  }
+}
+
+/**
+ * Analyze formatting issues without modifying the document
+ * @param {string} text - Document text
+ * @returns {Object} Issue counts by type with examples
+ */
+function analyzeFormattingIssues(text) {
+  const issues = {
+    multipleSpaces: 0,
+    spaceBeforePunct: 0,
+    missingSpaceAfterPunct: 0,
+    extraLineBreaks: 0,
+    repeatedPunctuation: 0,
+    spacedLetters: 0,
+    totalCount: 0,
+    examples: [] // Visual diff examples
+  };
+  
+  // Count and collect multiple spaces (2 or more)
+  const multiSpaceMatches = text.match(/ {2,}/g);
+  if (multiSpaceMatches) {
+    issues.multipleSpaces = multiSpaceMatches.length;
+    // Get first few examples with context
+    const exampleRegex = /(\S{0,15}) {2,}(\S{0,15})/g;
+    let match;
+    let exampleCount = 0;
+    while ((match = exampleRegex.exec(text)) !== null && exampleCount < 3) {
+      const before = match[1];
+      const after = match[2];
+      const spaces = match[0].match(/ +/)[0];
+      issues.examples.push({
+        type: 'Multiple spaces',
+        before: `${before}${spaces}${after}`,
+        after: `${before} ${after}`,
+        change: `"${spaces}" → " "`
+      });
+      exampleCount++;
+    }
+  }
+  
+  // Count and collect space before punctuation
+  const spacePunctRegex = /(\S{0,15}) ([.,!?;:])(\S{0,10})/g;
+  let match;
+  let count = 0;
+  while ((match = spacePunctRegex.exec(text)) !== null && count < 3) {
+    issues.spaceBeforePunct++;
+    if (count < 3) {
+      issues.examples.push({
+        type: 'Space before punctuation',
+        before: `${match[1]} ${match[2]}${match[3]}`,
+        after: `${match[1]}${match[2]}${match[3]}`,
+        change: `" ${match[2]}" → "${match[2]}"`
+      });
+    }
+    count++;
+  }
+  
+  // Count and collect missing space after punctuation
+  const missingSpaceRegex = /(\S{0,15})([.,!?;:])([A-Za-z0-9]\S{0,10})/g;
+  count = 0;
+  while ((match = missingSpaceRegex.exec(text)) !== null && count < 3) {
+    issues.missingSpaceAfterPunct++;
+    if (count < 3) {
+      issues.examples.push({
+        type: 'Missing space after punctuation',
+        before: `${match[1]}${match[2]}${match[3]}`,
+        after: `${match[1]}${match[2]} ${match[3]}`,
+        change: `"${match[2]}${match[3].charAt(0)}" → "${match[2]} ${match[3].charAt(0)}"`
+      });
+    }
+    count++;
+  }
+  
+  // Count and collect extra line breaks (3 or more)
+  const multiLineRegex = /(\S{0,20})\n{3,}(\S{0,20})/g;
+  count = 0;
+  while ((match = multiLineRegex.exec(text)) !== null && count < 2) {
+    issues.extraLineBreaks++;
+    if (count < 2) {
+      const lineBreaks = match[0].match(/\n+/)[0];
+      issues.examples.push({
+        type: 'Extra line breaks',
+        before: `${match[1]}${lineBreaks}${match[2]}`,
+        after: `${match[1]}\n\n${match[2]}`,
+        change: `${lineBreaks.length} blank lines → 2 blank lines`
+      });
+    }
+    count++;
+  }
+  
+  // Count and collect repeated punctuation (e.g., ???, !!!, ,,,)
+  const repeatedPunctRegex = /(\S{0,15})([.,!?;:]){3,}(\S{0,10})/g;
+  count = 0;
+  while ((match = repeatedPunctRegex.exec(text)) !== null && count < 3) {
+    issues.repeatedPunctuation++;
+    if (count < 3) {
+      const repeated = match[0].match(/[.,!?;:]+/)[0];
+      const single = match[2];
+      issues.examples.push({
+        type: 'Repeated punctuation',
+        before: `${match[1]}${repeated}${match[3]}`,
+        after: `${match[1]}${single}${match[3]}`,
+        change: `"${repeated}" → "${single}"`
+      });
+    }
+    count++;
+  }
+  
+  // Count and collect spaced-out letters (e.g., "t h i s")
+  const spacedLettersRegex = /(\S{0,10})\b([a-zA-Z]) ([a-zA-Z]) ([a-zA-Z])( [a-zA-Z])*\b(\S{0,10})/g;
+  count = 0;
+  while ((match = spacedLettersRegex.exec(text)) !== null && count < 2) {
+    issues.spacedLetters++;
+    if (count < 2) {
+      const spacedWord = match[0].match(/\b([a-zA-Z] )+[a-zA-Z]\b/)[0];
+      const fixed = spacedWord.replace(/ /g, '');
+      issues.examples.push({
+        type: 'Spaced-out letters',
+        before: spacedWord,
+        after: fixed,
+        change: `"${spacedWord}" → "${fixed}"`
+      });
+    }
+    count++;
+  }
+  
+  issues.totalCount = issues.multipleSpaces + issues.spaceBeforePunct + 
+                      issues.missingSpaceAfterPunct + issues.extraLineBreaks +
+                      issues.repeatedPunctuation + issues.spacedLetters;
+  
+  return issues;
+}
+
+/**
+ * Build visual diff preview message showing actual text changes
+ * @param {Object} issues - Issue counts with examples
+ * @returns {string} Preview message with diff-style changes
+ */
+function buildFormattingPreview(issues) {
+  if (issues.totalCount === 0) {
+    return 'No formatting issues found!';
+  }
+  
+  let message = `🔍 PREVIEW: ${issues.totalCount} formatting change${issues.totalCount === 1 ? '' : 's'}\n`;
+  message += '='.repeat(40) + '\n\n';
+  
+  // Group examples by type
+  const grouped = {};
+  issues.examples.forEach(ex => {
+    if (!grouped[ex.type]) grouped[ex.type] = [];
+    grouped[ex.type].push(ex);
+  });
+  
+  // Display each type with visual diffs
+  Object.keys(grouped).forEach(type => {
+    const examples = grouped[type];
+    message += `📝 ${type}\n`;
+    message += '-'.repeat(40) + '\n';
+    
+    examples.forEach((ex, idx) => {
+      message += `${idx + 1}. BEFORE: "${truncateText(ex.before, 35)}"\n`;
+      message += `   AFTER:  "${truncateText(ex.after, 35)}"\n`;
+      message += `   Change: ${ex.change}\n\n`;
+    });
+  });
+  
+  // Add summary
+  message += '='.repeat(40) + '\n';
+  message += '📊 SUMMARY:\n';
+  if (issues.multipleSpaces > 0) {
+    message += `  • ${issues.multipleSpaces} multiple space${issues.multipleSpaces === 1 ? '' : 's'}\n`;
+  }
+  if (issues.spaceBeforePunct > 0) {
+    message += `  • ${issues.spaceBeforePunct} space${issues.spaceBeforePunct === 1 ? '' : 's'} before punctuation\n`;
+  }
+  if (issues.missingSpaceAfterPunct > 0) {
+    message += `  • ${issues.missingSpaceAfterPunct} missing space${issues.missingSpaceAfterPunct === 1 ? '' : 's'} after punctuation\n`;
+  }
+  if (issues.extraLineBreaks > 0) {
+    message += `  • ${issues.extraLineBreaks} extra line break${issues.extraLineBreaks === 1 ? '' : 's'}\n`;
+  }
+  
+  message += `\n✨ Apply all ${issues.totalCount} fix${issues.totalCount === 1 ? '' : 'es'}?`;
+  
+  return message;
+}
+
+/**
+ * Truncate text for display
+ * @param {string} text - Text to truncate
+ * @param {number} maxLength - Maximum length
+ * @returns {string} Truncated text
+ */
+function truncateText(text, maxLength) {
+  // Replace newlines with visible symbol
+  text = text.replace(/\n/g, '↵');
+  
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return text.substring(0, maxLength - 3) + '...';
+}
+
+/**
+ * Apply formatting fixes to the document (optimized)
+ * @param {Body} body - Document body
+ * @param {string} text - Original text for validation
+ * @returns {Object} Results of fixes applied
+ */
+function applyFormattingFixes(body, text) {
+  const results = {
+    multipleSpaces: 0,
+    spaceBeforePunct: 0,
+    missingSpaceAfterPunct: 0,
+    extraLineBreaks: 0,
+    repeatedPunctuation: 0,
+    spacedLetters: 0,
+    totalFixed: 0
+  };
+  
+  // Fix 1: Multiple spaces → single space (GLOBAL)
+  const multiSpaceRegex = / {2,}/g;
+  const multiSpaceMatches = text.match(multiSpaceRegex);
+  if (multiSpaceMatches) {
+    body.replaceText(multiSpaceRegex, ' ');
+    results.multipleSpaces = multiSpaceMatches.length;
+  }
+  
+  // Fix 2: Space before punctuation (GLOBAL)
+  const spacePunctRegex = / ([.,!?;:])/g;
+  const spacePunctMatches = text.match(spacePunctRegex);
+  if (spacePunctMatches) {
+    body.replaceText(spacePunctRegex, '$1');
+    results.spaceBeforePunct = spacePunctMatches.length;
+  }
+  
+  // Fix 3: Missing space after punctuation (GLOBAL) - any letter or number
+  const missingSpaceRegex = /([.,!?;:])([A-Za-z0-9])/g;
+  const missingSpaceMatches = text.match(missingSpaceRegex);
+  if (missingSpaceMatches) {
+    body.replaceText(missingSpaceRegex, '$1 $2');
+    results.missingSpaceAfterPunct = missingSpaceMatches.length;
+  }
+  
+  // Fix 4: Extra line breaks (GLOBAL)
+  const multiLineRegex = /\n{3,}/g;
+  const multiLineMatches = text.match(multiLineRegex);
+  if (multiLineMatches) {
+    body.replaceText(multiLineRegex, '\n\n');
+    results.extraLineBreaks = multiLineMatches.length;
+  }
+  
+  // Fix 5: Repeated punctuation (???, !!!, ,,,) → single
+  const repeatedPunctRegex = /([.,!?;:]){3,}/g;
+  const repeatedPunctMatches = text.match(repeatedPunctRegex);
+  if (repeatedPunctMatches) {
+    // Keep just one of the repeated punctuation
+    body.replaceText(repeatedPunctRegex, '$1');
+    results.repeatedPunctuation = repeatedPunctMatches.length;
+  }
+  
+  // Fix 6: Spaced-out letters (t h i s) → this
+  const spacedLettersRegex = /\b([a-zA-Z]) ([a-zA-Z]) ([a-zA-Z])( [a-zA-Z])*\b/g;
+  const spacedLettersMatches = text.match(spacedLettersRegex);
+  if (spacedLettersMatches) {
+    // This requires special handling - remove spaces between single letters
+    spacedLettersMatches.forEach(match => {
+      const fixed = match.replace(/ /g, '');
+      body.replaceText(match, fixed);
+    });
+    results.spacedLetters = spacedLettersMatches.length;
+  }
+  
+  results.totalFixed = results.multipleSpaces + results.spaceBeforePunct + 
+                       results.missingSpaceAfterPunct + results.extraLineBreaks +
+                       results.repeatedPunctuation + results.spacedLetters;
+  
+  return results;
+}
+
+/**
+ * Build results message showing what was fixed
+ * @param {Object} results - Fix results
+ * @returns {string} Results message
+ */
+function buildFixResultsMessage(results) {
+  let message = `Successfully fixed ${results.totalFixed} issue${results.totalFixed === 1 ? '' : 's'}!\n\n`;
+  
+  if (results.multipleSpaces > 0) {
+    message += `✅ Fixed ${results.multipleSpaces} multiple space issue${results.multipleSpaces === 1 ? '' : 's'}\n`;
+  }
+  if (results.spaceBeforePunct > 0) {
+    message += `✅ Removed ${results.spaceBeforePunct} space${results.spaceBeforePunct === 1 ? '' : 's'} before punctuation\n`;
+  }
+  if (results.missingSpaceAfterPunct > 0) {
+    message += `✅ Added ${results.missingSpaceAfterPunct} space${results.missingSpaceAfterPunct === 1 ? '' : 's'} after punctuation\n`;
+  }
+  if (results.extraLineBreaks > 0) {
+    message += `✅ Normalized ${results.extraLineBreaks} extra line break${results.extraLineBreaks === 1 ? '' : 's'}\n`;
+  }
+  if (results.repeatedPunctuation > 0) {
+    message += `✅ Fixed ${results.repeatedPunctuation} repeated punctuation issue${results.repeatedPunctuation === 1 ? '' : 's'}\n`;
+  }
+  if (results.spacedLetters > 0) {
+    message += `✅ Joined ${results.spacedLetters} spaced-out word${results.spacedLetters === 1 ? '' : 's'}\n`;
+  }
+  
+  message += '\n🎉 Your document is now properly formatted!';
+  
+  return message;
 }
 
 /**

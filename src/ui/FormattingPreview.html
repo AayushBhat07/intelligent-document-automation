@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: 'Google Sans', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f8f9fa;
+      color: #202124;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px 8px 0 0;
+      margin: -20px -20px 20px -20px;
+    }
+    
+    .header h2 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      font-weight: 500;
+    }
+    
+    .header p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    
+    .diff-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    
+    .diff-header {
+      background: #f1f3f4;
+      padding: 12px 16px;
+      border-bottom: 1px solid #dadce0;
+      font-weight: 500;
+      font-size: 14px;
+      color: #5f6368;
+    }
+    
+    .diff-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .diff-item:last-child {
+      border-bottom: none;
+    }
+    
+    .diff-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      color: #5f6368;
+    }
+    
+    .diff-before {
+      background: #fef7f7;
+      border-left: 3px solid #ea4335;
+      padding: 8px 12px;
+      margin: 4px 0;
+      border-radius: 4px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 13px;
+      word-break: break-word;
+      position: relative;
+    }
+    
+    .diff-before::before {
+      content: "−";
+      position: absolute;
+      left: -16px;
+      color: #ea4335;
+      font-weight: bold;
+    }
+    
+    .diff-after {
+      background: #f0f8f4;
+      border-left: 3px solid #34a853;
+      padding: 8px 12px;
+      margin: 4px 0;
+      border-radius: 4px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 13px;
+      word-break: break-word;
+      position: relative;
+    }
+    
+    .diff-after::before {
+      content: "+";
+      position: absolute;
+      left: -16px;
+      color: #34a853;
+      font-weight: bold;
+    }
+    
+    .diff-change {
+      margin-top: 8px;
+      padding: 6px 10px;
+      background: #e8f0fe;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #1967d2;
+      font-style: italic;
+    }
+    
+    .summary {
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .summary h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: #202124;
+    }
+    
+    .summary-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 0;
+      color: #5f6368;
+      font-size: 14px;
+    }
+    
+    .summary-item::before {
+      content: "•";
+      color: #1967d2;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #1a73e8;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #1765cc;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    
+    .btn-secondary {
+      background: white;
+      color: #5f6368;
+      border: 1px solid #dadce0;
+    }
+    
+    .btn-secondary:hover {
+      background: #f8f9fa;
+      border-color: #bdc1c6;
+    }
+    
+    .space-indicator {
+      background: #fbbc04;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-size: 10px;
+      color: #000;
+      font-weight: bold;
+    }
+    
+    .newline-indicator {
+      color: #5f6368;
+      font-size: 11px;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #5f6368;
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>🔍 Formatting Changes Preview</h2>
+    <p id="issue-count">Analyzing document...</p>
+  </div>
+  
+  <div id="content"></div>
+  
+  <div class="action-buttons">
+    <button class="btn btn-secondary" onclick="cancel()">Cancel</button>
+    <button class="btn btn-primary" onclick="apply()" id="apply-btn">Apply Changes</button>
+  </div>
+  
+  <script>
+    let issuesData = null;
+    
+    // Called from server side
+    function displayPreview(issues) {
+      issuesData = issues;
+      const count = issues.totalCount;
+      
+      document.getElementById('issue-count').textContent = 
+        `Found ${count} formatting issue${count === 1 ? '' : 's'}`;
+      
+      const content = document.getElementById('content');
+      
+      if (count === 0) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">✅</div>
+            <h3>No Formatting Issues Found!</h3>
+            <p>Your document formatting looks great.</p>
+          </div>
+        `;
+        document.getElementById('apply-btn').disabled = true;
+        return;
+      }
+      
+      // Group examples by type
+      const grouped = {};
+      issues.examples.forEach(ex => {
+        if (!grouped[ex.type]) grouped[ex.type] = [];
+        grouped[ex.type].push(ex);
+      });
+      
+      let html = '';
+      
+      // Render each group
+      Object.keys(grouped).forEach(type => {
+        const examples = grouped[type];
+        html += `
+          <div class="diff-container">
+            <div class="diff-header">${type}</div>
+        `;
+        
+        examples.forEach((ex, idx) => {
+          html += `
+            <div class="diff-item">
+              <div class="diff-label">Before</div>
+              <div class="diff-before">${escapeHtml(highlightSpaces(ex.before))}</div>
+              
+              <div class="diff-label">After</div>
+              <div class="diff-after">${escapeHtml(highlightSpaces(ex.after))}</div>
+              
+              <div class="diff-change">💡 ${ex.change}</div>
+            </div>
+          `;
+        });
+        
+        html += '</div>';
+      });
+      
+      // Add summary
+      html += '<div class="summary"><h3>📊 Summary</h3>';
+      if (issues.multipleSpaces > 0) {
+        html += `<div class="summary-item">${issues.multipleSpaces} multiple space${issues.multipleSpaces === 1 ? '' : 's'}</div>`;
+      }
+      if (issues.spaceBeforePunct > 0) {
+        html += `<div class="summary-item">${issues.spaceBeforePunct} space${issues.spaceBeforePunct === 1 ? '' : 's'} before punctuation</div>`;
+      }
+      if (issues.missingSpaceAfterPunct > 0) {
+        html += `<div class="summary-item">${issues.missingSpaceAfterPunct} missing space${issues.missingSpaceAfterPunct === 1 ? '' : 's'} after punctuation</div>`;
+      }
+      if (issues.extraLineBreaks > 0) {
+        html += `<div class="summary-item">${issues.extraLineBreaks} extra line break${issues.extraLineBreaks === 1 ? '' : 's'}</div>`;
+      }
+      if (issues.repeatedPunctuation > 0) {
+        html += `<div class="summary-item">${issues.repeatedPunctuation} repeated punctuation issue${issues.repeatedPunctuation === 1 ? '' : 's'}</div>`;
+      }
+      if (issues.spacedLetters > 0) {
+        html += `<div class="summary-item">${issues.spacedLetters} spaced-out word${issues.spacedLetters === 1 ? '' : 's'}</div>`;
+      }
+      html += '</div>';
+      
+      content.innerHTML = html;
+    }
+    
+    function highlightSpaces(text) {
+      // Highlight multiple spaces
+      text = text.replace(/  +/g, match => 
+        `<span class="space-indicator">${match.length} spaces</span>`
+      );
+      // Show newlines
+      text = text.replace(/\n/g, '<span class="newline-indicator">↵</span><br>');
+      return text;
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function apply() {
+      google.script.host.close();
+      google.script.run.applyFormattingFixesFromPreview();
+    }
+    
+    function cancel() {
+      google.script.host.close();
+    }
+    
+    // Load preview on startup
+    google.script.run.withSuccessHandler(displayPreview).getFormattingPreviewData();
+  </script>
+</body>
+</html>

@@ -58,7 +58,8 @@ const SimpleAIService = (function() {
     }
     
     try {
-      const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + apiKey;
+      // Use v1beta API with gemini-2.0-flash (matches Google's official example)
+      const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
       
       const payload = {
         contents: [{
@@ -69,6 +70,9 @@ const SimpleAIService = (function() {
       const response = UrlFetchApp.fetch(url, {
         method: 'post',
         contentType: 'application/json',
+        headers: {
+          'X-goog-api-key': apiKey
+        },
         payload: JSON.stringify(payload),
         muteHttpExceptions: true
       });
@@ -79,7 +83,7 @@ const SimpleAIService = (function() {
         return {
           success: true,
           text: text,
-          model: 'gemini-1.5-flash'
+          model: 'gemini-2.0-flash'
         };
       } else {
         return {
