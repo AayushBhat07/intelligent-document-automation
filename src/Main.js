@@ -542,7 +542,7 @@ function replaceDocumentText(body, newText) {
   }
   
   try {
-    // Get original text for comparison
+    // Get original text for comparison BEFORE changing anything
     const originalText = body.getText();
     
     // Log for debugging
@@ -550,7 +550,13 @@ function replaceDocumentText(body, newText) {
     Logger.log('New text length: ' + newText.length);
     Logger.log('First 100 chars of new text: ' + newText.substring(0, 100));
     
-    // Method 1: Clear all and rebuild (preserves formatting better)
+    // Check if text actually changed BEFORE modifying document
+    const textChanged = originalText.trim() !== newText.trim();
+    Logger.log('Text different from original: ' + textChanged);
+    Logger.log('Original first 100: ' + originalText.substring(0, 100));
+    Logger.log('New first 100: ' + newText.substring(0, 100));
+    
+    // ALWAYS apply the changes (even if same, to ensure proper formatting)
     const numChildren = body.getNumChildren();
     
     // Remove all existing content
@@ -572,10 +578,7 @@ function replaceDocumentText(body, newText) {
     });
     
     Logger.log('Lines added: ' + linesAdded);
-    
-    // Check if text actually changed
-    const textChanged = originalText.trim() !== newText.trim();
-    Logger.log('Text changed: ' + textChanged);
+    Logger.log('Document updated successfully');
     
     return textChanged;
   } catch (e) {
