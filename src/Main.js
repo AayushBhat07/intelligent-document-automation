@@ -414,15 +414,29 @@ function applyAIFormattingMode(ui, body, text) {
     const result = applyOptimizedAIFixes(body, text);
     
     if (result.success) {
-      const changesMsg = result.changesMade ? 
-        '✅ Changes applied to document!' : 
-        '⚠️ No changes were made (document may already be formatted)';
+      let changesMsg = '';
+      let debugInfo = '';
+      
+      if (result.changesMade) {
+        changesMsg = '✅ Changes applied to document!';
+      } else {
+        changesMsg = '⚠️ No changes detected';
+        debugInfo = `
+
+DEBUG INFO:
+Original: ${result.originalLength} chars
+AI returned: ${result.newLength} chars
+
+First 150 chars of AI output:
+"${result.preview ? result.preview.substring(0, 150) : 'none'}..."`;
+      }
       
       ui.alert(
         'AI Formatting Complete! 🎉',
         changesMsg + '\n\n' +
-        `Processing time: ${result.time}s\n\n` +
-        '💾 Version saved - use "Restore Version" to undo',
+        `Processing time: ${result.time}s\n` +
+        `💾 Version saved - use "Restore Version" to undo` +
+        debugInfo,
         ui.ButtonSet.OK
       );
     } else {
@@ -477,8 +491,20 @@ ${textToFix}`;
   // Call AI service directly
   const result = SimpleAIService.generateText(prompt);
   
-  if (result.success) {
+  Logger.log('AI Result success: ' + (result ? result.success : 'null'));
+  if (result && result.success) {
     const correctedText = result.generated_text || result.text;
+    Logger.log('Corrected text exists: ' + (correctedText ? 'yes' : 'no'));
+    Logger.log('Corrected text length: ' + (correctedText ? correctedText.length : 0));
+    Logger.log('First 200 chars: ' + (correctedText ? correctedText.substring(0, 200) : 'none'));
+    
+    if (!correctedText || correctedText.trim().length === 0) {
+      Logger.log('ERROR: AI returned empty text');
+      return {
+        success: false,
+        error: 'AI returned empty response'
+      };
+    }
     
     // APPLY CHANGES IMMEDIATELY (before success dialog)
     const changesMade = replaceDocumentText(body, correctedText);
@@ -490,6 +516,9 @@ ${textToFix}`;
       success: true,
       time: timeTaken,
       changesMade: changesMade,
+      preview: correctedText,
+      originalLength: text.length,
+      newLength: correctedText.length,
       message: 'Formatted using AI'
     };
   }
@@ -508,10 +537,19 @@ ${textToFix}`;
  */
 function replaceDocumentText(body, newText) {
   if (!newText || newText.trim().length === 0) {
+    Logger.log('replaceDocumentText: No text provided');
     return false;
   }
   
   try {
+    // Get original text for comparison
+    const originalText = body.getText();
+    
+    // Log for debugging
+    Logger.log('Original length: ' + originalText.length);
+    Logger.log('New text length: ' + newText.length);
+    Logger.log('First 100 chars of new text: ' + newText.substring(0, 100));
+    
     // Method 1: Clear all and rebuild (preserves formatting better)
     const numChildren = body.getNumChildren();
     
@@ -522,17 +560,27 @@ function replaceDocumentText(body, newText) {
     
     // Split by newlines and add as paragraphs
     const lines = newText.split('\n');
+    let linesAdded = 0;
+    
     lines.forEach(line => {
       if (line.trim().length > 0) {
         body.appendParagraph(line);
+        linesAdded++;
       } else {
         body.appendParagraph(''); // Empty paragraph for spacing
       }
     });
     
-    return true;
+    Logger.log('Lines added: ' + linesAdded);
+    
+    // Check if text actually changed
+    const textChanged = originalText.trim() !== newText.trim();
+    Logger.log('Text changed: ' + textChanged);
+    
+    return textChanged;
   } catch (e) {
     Logger.log('Error replacing text: ' + e.message);
+    Logger.log('Stack trace: ' + e.stack);
     return false;
   }
 }
