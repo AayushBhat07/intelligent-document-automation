@@ -10,182 +10,72 @@
       }
       
       body {
-        font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+        font-family: 'Google Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
         font-size: 14px;
         color: #202124;
-        background: #fff;
-        padding: 16px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 0;
+        height: 100vh;
+        overflow-x: hidden;
       }
       
       .header {
-        margin-bottom: 20px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid #e8eaed;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 24px 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       }
       
       .header h2 {
-        font-size: 18px;
-        font-weight: 500;
+        font-size: 22px;
+        font-weight: 600;
         margin-bottom: 4px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
       }
       
       .header p {
-        font-size: 12px;
-        color: #5f6368;
-      }
-      
-      .section {
-        margin-bottom: 24px;
-      }
-      
-      .section-title {
-        font-size: 14px;
-        font-weight: 500;
-        margin-bottom: 12px;
-        color: #3c4043;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      
-      .action-card {
-        background: #f8f9fa;
-        border: 1px solid #e8eaed;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 8px;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-      
-      .action-card:hover {
-        background: #e8f0fe;
-        border-color: #1a73e8;
-      }
-      
-      .action-card-title {
-        font-weight: 500;
-        margin-bottom: 4px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      
-      .action-card-desc {
-        font-size: 12px;
-        color: #5f6368;
-      }
-      
-      .issue-badge {
-        display: inline-block;
-        background: #fce8e6;
-        color: #c5221f;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 11px;
-        font-weight: 500;
-        margin-left: auto;
-      }
-      
-      .issue-badge.warning {
-        background: #fef7e0;
-        color: #f9ab00;
-      }
-      
-      .issue-badge.info {
-        background: #e8f0fe;
-        color: #1a73e8;
-      }
-      
-      .btn {
-        width: 100%;
-        padding: 10px 16px;
-        border: none;
-        border-radius: 4px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin-bottom: 8px;
-      }
-      
-      .btn-primary {
-        background: #1a73e8;
-        color: #fff;
-      }
-      
-      .btn-primary:hover {
-        background: #1765cc;
-      }
-      
-      .btn-secondary {
-        background: #fff;
-        color: #1a73e8;
-        border: 1px solid #dadce0;
-      }
-      
-      .btn-secondary:hover {
-        background: #f8f9fa;
-      }
-      
-      .loading {
-        text-align: center;
-        padding: 20px;
-        color: #5f6368;
-      }
-      
-      .spinner {
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid #1a73e8;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 12px;
-      }
-      
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      
-      .results {
-        background: #e8f5e9;
-        border: 1px solid #81c784;
-        border-radius: 4px;
-        padding: 12px;
-        margin-top: 12px;
-      }
-      
-      .results-title {
-        font-weight: 500;
-        margin-bottom: 8px;
-        color: #2e7d32;
-      }
-      
-      .tab-container {
-        display: flex;
-        border-bottom: 1px solid #e8eaed;
-        margin-bottom: 16px;
-      }
-      
-      .tab {
-        flex: 1;
-        padding: 12px 8px;
-        text-align: center;
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        transition: all 0.2s;
         font-size: 13px;
+        opacity: 0.95;
+        font-weight: 300;
       }
       
-      .tab.active {
-        border-bottom-color: #1a73e8;
-        color: #1a73e8;
+      .container {
+        padding: 16px;
+      }
+      
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        overflow-x: auto;
+        padding: 4px;
+      }
+      
+      .tab-btn {
+        flex-shrink: 0;
+        padding: 10px 16px;
+        background: white;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 13px;
         font-weight: 500;
+        color: #5f6368;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      }
+      
+      .tab-btn:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        transform: translateY(-1px);
+      }
+      
+      .tab-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
       }
       
       .tab-content {
@@ -194,138 +84,427 @@
       
       .tab-content.active {
         display: block;
+        animation: fadeIn 0.3s ease-in;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .section-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #5f6368;
+        margin: 20px 0 12px 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .card {
+        background: white;
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid transparent;
+      }
+      
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+        border-color: #667eea;
+      }
+      
+      .card:active {
+        transform: translateY(0);
+      }
+      
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+      
+      .card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+      
+      .icon-analyze { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+      .icon-format { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+      .icon-version { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+      .icon-summary { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+      .icon-redact { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+      .icon-template { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+      .icon-ai { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+      
+      .card-content {
+        flex: 1;
+      }
+      
+      .card-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #202124;
+        margin-bottom: 4px;
+      }
+      
+      .card-desc {
+        font-size: 12px;
+        color: #5f6368;
+        line-height: 1.4;
+      }
+      
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-top: 8px;
+      }
+      
+      .badge-success {
+        background: #e6f4ea;
+        color: #1e8e3e;
+      }
+      
+      .badge-warning {
+        background: #fef7e0;
+        color: #f9ab00;
+      }
+      
+      .badge-error {
+        background: #fce8e6;
+        color: #c5221f;
+      }
+      
+      .badge-info {
+        background: #e8f0fe;
+        color: #1a73e8;
+      }
+      
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 12px;
+      }
+      
+      .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        text-align: center;
+      }
+      
+      .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 4px;
+      }
+      
+      .stat-label {
+        font-size: 11px;
+        color: #5f6368;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .btn {
+        width: 100%;
+        padding: 14px 20px;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+      
+      .btn-primary:hover {
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px);
+      }
+      
+      .btn-secondary {
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+      }
+      
+      .btn-secondary:hover {
+        background: #f8f9fa;
+        transform: translateY(-2px);
+      }
+      
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(8px);
+      }
+      
+      .loading-overlay.show {
+        display: flex;
+      }
+      
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .results-panel {
+        background: white;
+        border-radius: 16px;
+        padding: 16px;
+        margin-top: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        animation: slideUp 0.3s ease-out;
+      }
+      
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .results-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #202124;
+      }
+      
+      .issue-item {
+        padding: 10px 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        font-size: 13px;
+        border-left: 3px solid #667eea;
+      }
+      
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: #667eea;
+        border-radius: 3px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: #764ba2;
       }
     </style>
   </head>
   <body>
     <div class="header">
       <h2>🤖 Smart Automation</h2>
-      <p>Automate your workflow with intelligent suggestions</p>
+      <p>Automate your workflow with intelligent AI</p>
     </div>
     
-    <div class="tab-container">
-      <div class="tab active" onclick="switchTab('analyze')">📊 Analyze</div>
-      <div class="tab" onclick="switchTab('redact')">🔒 Redact</div>
-      <div class="tab" onclick="switchTab('clean')">✨ Clean</div>
-      <div class="tab" onclick="switchTab('templates')">📋 Templates</div>
-    </div>
-    
-    <!-- Analyze Tab -->
-    <div id="tab-analyze" class="tab-content active">
-      <div class="section">
-        <div class="section-title">📈 Quick Actions</div>
+    <div class="container">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('analyze')">📊 Analyze</button>
+        <button class="tab-btn" onclick="switchTab('format')">✨ Format</button>
+        <button class="tab-btn" onclick="switchTab('redact')">🔒 Redact</button>
+        <button class="tab-btn" onclick="switchTab('templates')">📋 Templates</button>
+      </div>
+      
+      <!-- Analyze Tab -->
+      <div id="tab-analyze" class="tab-content active">
+        <div class="section-title">Quick Actions</div>
         
-        <div class="action-card" onclick="runAnalysis()">
-          <div class="action-card-title">
-            🔍 Analyze Document
-            <span id="issues-badge" class="issue-badge info" style="display: none;">0 issues</span>
+        <div class="card" onclick="analyzeDocument()">
+          <div class="card-header">
+            <div class="card-icon icon-analyze">🔍</div>
+            <div class="card-content">
+              <div class="card-title">Analyze Document</div>
+              <div class="card-desc">Detect formatting issues and anomalies</div>
+              <div id="analyze-badge" style="display:none;"></div>
+            </div>
           </div>
-          <div class="action-card-desc">Detect formatting issues and anomalies</div>
         </div>
         
-        <div class="action-card" onclick="summarizeContent()">
-          <div class="action-card-title">📝 Summarize</div>
-          <div class="action-card-desc">Generate a smart summary of selected text or entire document</div>
+        <div class="card" onclick="summarizeDocument()">
+          <div class="card-header">
+            <div class="card-icon icon-summary">📝</div>
+            <div class="card-content">
+              <div class="card-title">Summarize</div>
+              <div class="card-desc">Generate smart summary in sidebar</div>
+            </div>
+          </div>
         </div>
         
         <div id="analysis-results"></div>
       </div>
-    </div>
-    
-    <!-- Redact Tab -->
-    <div id="tab-redact" class="tab-content">
-      <div class="section">
-        <div class="section-title">🔒 Privacy Protection</div>
+      
+      <!-- Format Tab -->
+      <div id="tab-format" class="tab-content">
+        <div class="section-title">Formatting Tools</div>
         
-        <div class="action-card" onclick="detectPII()">
-          <div class="action-card-title">🔍 Detect PII</div>
-          <div class="action-card-desc">Find emails, phone numbers, SSN, and sensitive data</div>
+        <div class="card" onclick="quickFormat()">
+          <div class="card-header">
+            <div class="card-icon icon-format">⚡</div>
+            <div class="card-content">
+              <div class="card-title">Quick Format</div>
+              <div class="card-desc">Fix common issues in < 1 second</div>
+            </div>
+          </div>
         </div>
         
-        <div class="action-card" onclick="redactSensitiveData()">
-          <div class="action-card-title">🚫 Redact Sensitive Data</div>
-          <div class="action-card-desc">Automatically mask detected PII</div>
+        <div class="card" onclick="aiFormat()">
+          <div class="card-header">
+            <div class="card-icon icon-ai">🤖</div>
+            <div class="card-content">
+              <div class="card-title">AI Comprehensive Format</div>
+              <div class="card-desc">Advanced formatting with AI (3-8s)</div>
+            </div>
+          </div>
         </div>
         
-        <div id="redaction-results"></div>
+        <div class="section-title">Version Control</div>
+        
+        <div class="card" onclick="restoreVersion()">
+          <div class="card-header">
+            <div class="card-icon icon-version">⏪</div>
+            <div class="card-content">
+              <div class="card-title">Restore Version</div>
+              <div class="card-desc">View and restore previous versions</div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="format-results"></div>
       </div>
-    </div>
-    
-    <!-- Clean Tab -->
-    <div id="tab-clean" class="tab-content">
-      <div class="section">
-        <div class="section-title">✨ Cleanup & Format</div>
+      
+      <!-- Redact Tab -->
+      <div id="tab-redact" class="tab-content">
+        <div class="section-title">Privacy Protection</div>
         
-        <div class="action-card" onclick="removeDuplicates()">
-          <div class="action-card-title">🗑️ Remove Duplicates</div>
-          <div class="action-card-desc">Find and remove duplicate rows or entries</div>
+        <div class="card" onclick="detectPII()">
+          <div class="card-header">
+            <div class="card-icon icon-redact">🔍</div>
+            <div class="card-content">
+              <div class="card-title">Detect PII</div>
+              <div class="card-desc">Find sensitive information</div>
+            </div>
+          </div>
         </div>
         
-        <div class="action-card" onclick="standardizeDates()">
-          <div class="action-card-title">📅 Standardize Dates</div>
-          <div class="action-card-desc">Convert all dates to consistent format</div>
+        <div class="card" onclick="redactData()">
+          <div class="card-header">
+            <div class="card-icon icon-redact">🚫</div>
+            <div class="card-content">
+              <div class="card-title">Redact Sensitive Data</div>
+              <div class="card-desc">Mask emails, SSN, phone numbers</div>
+            </div>
+          </div>
         </div>
         
-        <div class="action-card" onclick="fillEmptyCells()">
-          <div class="action-card-title">📊 Fill Empty Cells</div>
-          <div class="action-card-desc">Intelligently fill blank cells with appropriate values</div>
-        </div>
-        
-        <div id="cleanup-results"></div>
+        <div id="redact-results"></div>
       </div>
-    </div>
-    
-    <!-- Templates Tab -->
-    <div id="tab-templates" class="tab-content">
-      <div class="section">
-        <div class="section-title">📋 Template Library</div>
+      
+      <!-- Templates Tab -->
+      <div id="tab-templates" class="tab-content">
+        <div class="section-title">Template Library</div>
         
-        <button class="btn btn-primary" onclick="openTemplatePicker()">
-          📁 Browse Templates
+        <button class="btn btn-primary" onclick="browseTemplates()">
+          📁 Browse All Templates
         </button>
         
-        <div class="action-card" onclick="applyGradingRubric()">
-          <div class="action-card-title">🎓 Grading Rubric</div>
-          <div class="action-card-desc">Apply standard grading template</div>
+        <div class="card" onclick="applyTemplate('grading')">
+          <div class="card-header">
+            <div class="card-icon icon-template">🎓</div>
+            <div class="card-content">
+              <div class="card-title">Grading Rubric</div>
+              <div class="card-desc">Academic grading template</div>
+            </div>
+          </div>
         </div>
         
-        <div class="action-card" onclick="applyDocumentStyle()">
-          <div class="action-card-title">🎨 Document Style</div>
-          <div class="action-card-desc">Apply professional formatting template</div>
+        <div class="card" onclick="applyTemplate('style')">
+          <div class="card-header">
+            <div class="card-icon icon-template">🎨</div>
+            <div class="card-content">
+              <div class="card-title">Document Style</div>
+              <div class="card-desc">Professional formatting</div>
+            </div>
+          </div>
         </div>
         
         <div id="template-results"></div>
       </div>
     </div>
     
-    <div id="loading" class="loading" style="display: none;">
+    <div class="loading-overlay" id="loading">
       <div class="spinner"></div>
-      <div>Processing...</div>
     </div>
     
     <script>
       // Tab switching
       function switchTab(tabName) {
-        // Hide all tabs
-        document.querySelectorAll('.tab-content').forEach(tab => {
-          tab.classList.remove('active');
-        });
-        document.querySelectorAll('.tab').forEach(tab => {
-          tab.classList.remove('active');
-        });
-        
-        // Show selected tab
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById('tab-' + tabName).classList.add('active');
         event.target.classList.add('active');
       }
       
-      // Show/hide loading
+      // Loading overlay
       function showLoading(show) {
-        document.getElementById('loading').style.display = show ? 'block' : 'none';
+        const overlay = document.getElementById('loading');
+        if (show) {
+          overlay.classList.add('show');
+        } else {
+          overlay.classList.remove('show');
+        }
       }
       
-      // Analysis functions
-      function runAnalysis() {
+      // Analyze Functions
+      function analyzeDocument() {
         showLoading(true);
         google.script.run
           .withSuccessHandler(displayAnalysisResults)
@@ -336,42 +515,68 @@
       function displayAnalysisResults(results) {
         showLoading(false);
         const container = document.getElementById('analysis-results');
-        const badge = document.getElementById('issues-badge');
+        const badge = document.getElementById('analyze-badge');
         
-        if (results.issues && results.issues.length > 0) {
-          badge.style.display = 'inline-block';
-          badge.textContent = results.issues.length + ' issues';
-          badge.className = 'issue-badge warning';
+        if (results && results.totalCount > 0) {
+          badge.style.display = 'block';
+          badge.className = 'badge badge-warning';
+          badge.textContent = results.totalCount + ' issues found';
           
-          let html = '<div class="results"><div class="results-title">Found ' + results.issues.length + ' issues:</div>';
-          results.issues.forEach(issue => {
-            html += '<div style="margin: 4px 0; font-size: 12px;">• ' + issue + '</div>';
+          let html = '<div class="results-panel"><div class="results-title">🚨 Found ' + results.totalCount + ' issues</div>';
+          const issues = [];
+          if (results.multipleSpaces && results.multipleSpaces.length > 0) {
+            issues.push(results.multipleSpaces.length + ' multiple spaces');
+          }
+          if (results.spellingMistakes && results.spellingMistakes.length > 0) {
+            issues.push(results.spellingMistakes.length + ' spelling errors');
+          }
+          issues.forEach(issue => {
+            html += '<div class="issue-item">• ' + issue + '</div>';
           });
           html += '</div>';
           container.innerHTML = html;
         } else {
-          badge.style.display = 'inline-block';
+          badge.style.display = 'block';
+          badge.className = 'badge badge-success';
           badge.textContent = '✓ No issues';
-          badge.className = 'issue-badge info';
-          container.innerHTML = '<div class="results"><div class="results-title">✅ Document looks great!</div></div>';
+          container.innerHTML = '<div class="results-panel"><div class="results-title">✅ Document looks perfect!</div></div>';
         }
       }
       
-      function summarizeContent() {
+      function summarizeDocument() {
         showLoading(true);
         google.script.run
-          .withSuccessHandler(displaySummary)
+          .withSuccessHandler(handleSuccess)
           .withFailureHandler(handleError)
           .summarizeDocument();
       }
       
-      function displaySummary(summary) {
-        showLoading(false);
-        const container = document.getElementById('analysis-results');
-        container.innerHTML = '<div class="results"><div class="results-title">📝 Summary:</div><div style="margin-top: 8px; font-size: 13px;">' + summary + '</div></div>';
+      // Format Functions
+      function quickFormat() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(handleSuccess)
+          .withFailureHandler(handleError)
+          .quickFixFormatting();
       }
       
-      // Redaction functions
+      function aiFormat() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(handleSuccess)
+          .withFailureHandler(handleError)
+          .smartFormatDocument();
+      }
+      
+      function restoreVersion() {
+        showLoading(true);
+        google.script.run
+          .withSuccessHandler(function() { showLoading(false); })
+          .withFailureHandler(handleError)
+          .restorePreviousVersion();
+      }
+      
+      // Redact Functions
       function detectPII() {
         showLoading(true);
         google.script.run
@@ -382,110 +587,61 @@
       
       function displayPIIResults(results) {
         showLoading(false);
-        const container = document.getElementById('redaction-results');
+        const container = document.getElementById('redact-results');
         
         if (results.found && results.found.length > 0) {
-          let html = '<div class="results" style="background: #fef7e0; border-color: #f9ab00;"><div class="results-title" style="color: #f9ab00;">⚠️ Found ' + results.found.length + ' sensitive items:</div>';
+          let html = '<div class="results-panel"><div class="results-title">⚠️ Found ' + results.found.length + ' sensitive items</div>';
           results.found.forEach(item => {
-            html += '<div style="margin: 4px 0; font-size: 12px;">• ' + item.type + ': ' + item.preview + '</div>';
+            html += '<div class="issue-item">• ' + item.type + ': ' + item.preview + '</div>';
           });
           html += '</div>';
           container.innerHTML = html;
         } else {
-          container.innerHTML = '<div class="results"><div class="results-title">✅ No PII detected</div></div>';
+          container.innerHTML = '<div class="results-panel"><div class="results-title">✅ No PII detected</div></div>';
         }
       }
       
-      function redactSensitiveData() {
+      function redactData() {
         showLoading(true);
         google.script.run
-          .withSuccessHandler(displayRedactionResults)
+          .withSuccessHandler(handleSuccess)
           .withFailureHandler(handleError)
           .redactPIIInDocument();
       }
       
-      function displayRedactionResults(results) {
-        showLoading(false);
-        const container = document.getElementById('redaction-results');
-        container.innerHTML = '<div class="results"><div class="results-title">✅ Redacted ' + results.count + ' items</div></div>';
-      }
-      
-      // Cleanup functions
-      function removeDuplicates() {
+      // Template Functions
+      function browseTemplates() {
         showLoading(true);
         google.script.run
-          .withSuccessHandler(displayCleanupResults)
-          .withFailureHandler(handleError)
-          .removeDuplicateRows();
-      }
-      
-      function standardizeDates() {
-        showLoading(true);
-        google.script.run
-          .withSuccessHandler(displayCleanupResults)
-          .withFailureHandler(handleError)
-          .standardizeDateFormats();
-      }
-      
-      function fillEmptyCells() {
-        showLoading(true);
-        google.script.run
-          .withSuccessHandler(displayCleanupResults)
-          .withFailureHandler(handleError)
-          .fillEmptyCellsIntelligently();
-      }
-      
-      function displayCleanupResults(results) {
-        showLoading(false);
-        const container = document.getElementById('cleanup-results');
-        container.innerHTML = '<div class="results"><div class="results-title">✅ ' + results.message + '</div></div>';
-      }
-      
-      // Template functions
-      function openTemplatePicker() {
-        showLoading(true);
-        google.script.run
-          .withSuccessHandler(handleTemplateSelection)
+          .withSuccessHandler(function() { showLoading(false); })
           .withFailureHandler(handleError)
           .showTemplatePicker();
       }
       
-      function applyGradingRubric() {
+      function applyTemplate(type) {
         showLoading(true);
         google.script.run
-          .withSuccessHandler(displayTemplateResults)
+          .withSuccessHandler(handleSuccess)
           .withFailureHandler(handleError)
-          .applyTemplate('grading_rubric');
+          .applyTemplate(type);
       }
       
-      function applyDocumentStyle() {
-        showLoading(true);
-        google.script.run
-          .withSuccessHandler(displayTemplateResults)
-          .withFailureHandler(handleError)
-          .applyTemplate('document_style');
-      }
-      
-      function handleTemplateSelection(result) {
+      // Generic handlers
+      function handleSuccess(result) {
         showLoading(false);
-        displayTemplateResults(result);
+        if (result && result.message) {
+          alert('✅ ' + result.message);
+        }
       }
       
-      function displayTemplateResults(results) {
-        showLoading(false);
-        const container = document.getElementById('template-results');
-        container.innerHTML = '<div class="results"><div class="results-title">✅ ' + results.message + '</div></div>';
-      }
-      
-      // Error handler
       function handleError(error) {
         showLoading(false);
-        alert('Error: ' + error.message);
+        alert('❌ Error: ' + (error.message || error));
       }
       
-      // Initialize on load
+      // Auto-analyze on load
       window.onload = function() {
-        runAnalysis();
+        analyzeDocument();
       };
     </script>
   </body>
