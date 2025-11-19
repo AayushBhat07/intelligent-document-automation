@@ -497,6 +497,12 @@ ${textToFix}`;
     Logger.log('Corrected text exists: ' + (correctedText ? 'yes' : 'no'));
     Logger.log('Corrected text length: ' + (correctedText ? correctedText.length : 0));
     Logger.log('First 200 chars: ' + (correctedText ? correctedText.substring(0, 200) : 'none'));
+    Logger.log('Last 100 chars: ' + (correctedText ? correctedText.substring(correctedText.length - 100) : 'none'));
+    
+    // Check for common AI response patterns that indicate it's not just returning the text
+    if (correctedText && (correctedText.includes('Here is') || correctedText.includes('Here\'s') || correctedText.includes('Corrected text:'))) {
+      Logger.log('WARNING: AI may have returned explanation instead of just corrected text');
+    }
     
     if (!correctedText || correctedText.trim().length === 0) {
       Logger.log('ERROR: AI returned empty text');
@@ -551,10 +557,29 @@ function replaceDocumentText(body, newText) {
     Logger.log('First 100 chars of new text: ' + newText.substring(0, 100));
     
     // Check if text actually changed BEFORE modifying document
-    const textChanged = originalText.trim() !== newText.trim();
+    // Normalize whitespace for comparison
+    const normalizedOriginal = originalText.replace(/\s+/g, ' ').trim();
+    const normalizedNew = newText.replace(/\s+/g, ' ').trim();
+    const textChanged = normalizedOriginal !== normalizedNew;
+    
     Logger.log('Text different from original: ' + textChanged);
+    Logger.log('Normalized original length: ' + normalizedOriginal.length);
+    Logger.log('Normalized new length: ' + normalizedNew.length);
     Logger.log('Original first 100: ' + originalText.substring(0, 100));
     Logger.log('New first 100: ' + newText.substring(0, 100));
+    
+    // Check character-by-character difference for first mismatch
+    if (!textChanged) {
+      Logger.log('Texts appear identical after normalization');
+    } else {
+      // Find first difference
+      for (let i = 0; i < Math.min(normalizedOriginal.length, normalizedNew.length); i++) {
+        if (normalizedOriginal[i] !== normalizedNew[i]) {
+          Logger.log('First difference at position ' + i + ': "' + normalizedOriginal.substring(i, i+20) + '" vs "' + normalizedNew.substring(i, i+20) + '"');
+          break;
+        }
+      }
+    }
     
     // ALWAYS apply the changes (even if same, to ensure proper formatting)
     const numChildren = body.getNumChildren();
@@ -580,7 +605,14 @@ function replaceDocumentText(body, newText) {
     Logger.log('Lines added: ' + linesAdded);
     Logger.log('Document updated successfully');
     
-    return textChanged;
+    // CRITICAL: If we added lines, the document WAS modified
+    // Return true if text differs OR if we successfully rebuilt the document
+    const documentWasModified = linesAdded > 0;
+    Logger.log('Document was modified: ' + documentWasModified);
+    Logger.log('Content changed: ' + textChanged);
+    
+    // Return true if either the content changed OR we successfully updated the document
+    return textChanged || documentWasModified;
   } catch (e) {
     Logger.log('Error replacing text: ' + e.message);
     Logger.log('Stack trace: ' + e.stack);
