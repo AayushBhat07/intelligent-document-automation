@@ -581,38 +581,90 @@ function replaceDocumentText(body, newText) {
       }
     }
     
-    // ALWAYS apply the changes (even if same, to ensure proper formatting)
-    const numChildren = body.getNumChildren();
-    
-    // Remove all existing content
-    for (let i = numChildren - 1; i >= 0; i--) {
-      body.removeChild(body.getChild(i));
-    }
-    
-    // Split by newlines and add as paragraphs
-    const lines = newText.split('\n');
-    let linesAdded = 0;
-    
-    lines.forEach(line => {
-      if (line.trim().length > 0) {
-        body.appendParagraph(line);
-        linesAdded++;
-      } else {
-        body.appendParagraph(''); // Empty paragraph for spacing
+    // METHOD 1: Try using editAsText() - more reliable for text replacement
+    Logger.log('Attempting Method 1: editAsText()');
+    try {
+      const textElement = body.editAsText();
+      const currentLength = textElement.getText().length;
+      
+      if (currentLength > 0) {
+        // Delete all existing text
+        textElement.deleteText(0, currentLength - 1);
       }
-    });
-    
-    Logger.log('Lines added: ' + linesAdded);
-    Logger.log('Document updated successfully');
-    
-    // CRITICAL: If we added lines, the document WAS modified
-    // Return true if text differs OR if we successfully rebuilt the document
-    const documentWasModified = linesAdded > 0;
-    Logger.log('Document was modified: ' + documentWasModified);
-    Logger.log('Content changed: ' + textChanged);
-    
-    // Return true if either the content changed OR we successfully updated the document
-    return textChanged || documentWasModified;
+      
+      // Insert new text
+      textElement.insertText(0, newText);
+      
+      Logger.log('Method 1 SUCCESS: Text replaced using editAsText()');
+      
+      // Verify
+      const verifyText = body.getText();
+      Logger.log('Verification - new document length: ' + verifyText.length);
+      Logger.log('Verification - first 100 chars: ' + verifyText.substring(0, 100));
+      
+      return true;
+    } catch (e1) {
+      Logger.log('Method 1 FAILED: ' + e1.message);
+      Logger.log('Attempting Method 2: removeChild + appendParagraph');
+      
+      // METHOD 2: Remove all children and rebuild
+      const numChildren = body.getNumChildren();
+      Logger.log('Removing ' + numChildren + ' existing children');
+      
+      // Remove all existing content
+      for (let i = numChildren - 1; i >= 0; i--) {
+        try {
+          body.removeChild(body.getChild(i));
+        } catch (e) {
+          Logger.log('Error removing child ' + i + ': ' + e.message);
+        }
+      }
+      
+      Logger.log('Document cleared, remaining children: ' + body.getNumChildren());
+      
+      // Add text as paragraphs (each line becomes a paragraph)
+      const lines = newText.split('\n');
+      let linesAdded = 0;
+      let paragraphsCreated = 0;
+      
+      lines.forEach((line, index) => {
+        try {
+          const para = body.appendParagraph(line);
+          paragraphsCreated++;
+          if (line.trim().length > 0) {
+            linesAdded++;
+          }
+          if (index < 3) {
+            Logger.log('Added paragraph ' + index + ': "' + line.substring(0, 50) + '..."');
+          }
+        } catch (e) {
+          Logger.log('Error adding line ' + index + ': ' + e.message);
+        }
+      });
+      
+      Logger.log('Lines added: ' + linesAdded);
+      Logger.log('Paragraphs created: ' + paragraphsCreated);
+      Logger.log('Document children after update: ' + body.getNumChildren());
+      
+      // Verify the document actually changed
+      const newDocText = body.getText();
+      Logger.log('Document text after update (first 100): ' + newDocText.substring(0, 100));
+      Logger.log('Document text length after update: ' + newDocText.length);
+      Logger.log('Method 2 completed');
+      
+      // CRITICAL: If we added lines, the document WAS modified
+      // Return true if text differs OR if we successfully rebuilt the document
+      const documentWasModified = paragraphsCreated > 0;
+      Logger.log('Document was modified: ' + documentWasModified);
+      Logger.log('Content changed: ' + textChanged);
+      
+      // VERIFY: Check if document actually has the new content
+      const actuallyChanged = newDocText.trim().length > 0 && newDocText !== originalText;
+      Logger.log('Document actually changed (verified): ' + actuallyChanged);
+      
+      // Return true if either the content changed OR we successfully updated the document
+      return textChanged || documentWasModified || actuallyChanged;
+    }
   } catch (e) {
     Logger.log('Error replacing text: ' + e.message);
     Logger.log('Stack trace: ' + e.stack);
